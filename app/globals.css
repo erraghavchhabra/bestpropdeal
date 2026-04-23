@@ -36,3 +36,22 @@ p{
 .swiper-button-prev, .swiper-button-next{
   color: red !important
 }
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+.card-ft p{
+  font-size: 12px
+}

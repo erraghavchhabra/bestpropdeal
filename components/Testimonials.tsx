@@ -13,36 +13,42 @@ const textTestimonials = [
     role: "Bought 3BHK in Andheri",
     quote:
       "BestPropDeal made the entire home buying process seamless. Transparent pricing and expert guidance throughout.",
+    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
   },
   {
     name: "Priya Sharma",
     role: "Investor",
     quote:
       "Professional team with deep market knowledge. They helped me secure the right property at the right price.",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
   },
   {
     name: "Amit Verma",
     role: "First-Time Buyer",
     quote:
       "From shortlist to registration, everything was handled professionally. Highly recommended.",
+    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
   },
   {
     name: "Sneha Kapoor",
     role: "Villa Buyer",
     quote:
       "Excellent service, transparent communication, and premium support at every stage.",
+    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
   },
   {
     name: "Karan Patel",
     role: "Commercial Investor",
     quote:
       "Their investment advice was extremely valuable and helped me close a profitable deal.",
+    image: "https://images.unsplash.com/photo-1502767089025-6572583495b0",
   },
   {
     name: "Neha Arora",
     role: "Apartment Buyer",
     quote:
       "Super smooth experience from property tours to documentation and possession.",
+    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
   },
 ];
 
@@ -89,7 +95,8 @@ export default function Testimonials() {
           >
             {textTestimonials.map((item, i) => (
               <SwiperSlide key={i}>
-                <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm h-[320px] flex flex-col justify-between">
+                <div className="relative rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm h-[320px] flex flex-col justify-between">
+                  
                   <div>
                     <div className="flex gap-1 mb-4">
                       {[...Array(5)].map((_, idx) => (
@@ -105,10 +112,23 @@ export default function Testimonials() {
                     </p>
                   </div>
 
-                  <div className="pt-5 border-t border-white/10 mt-6">
-                    <h4 className="text-white font-semibold">{item.name}</h4>
-                    <p className="text-white/50 text-sm">{item.role}</p>
+                  {/* Bottom Info */}
+                  <div className="pt-5 border-t border-white/10 mt-6 flex items-center justify-between">
+                    <div>
+                      <h4 className="text-white font-semibold">
+                        {item.name}
+                      </h4>
+                      <p className="text-white/50 text-sm">{item.role}</p>
+                    </div>
+
+                    {/* ✅ Avatar (Bottom Right) */}
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-white/20"
+                    />
                   </div>
+
                 </div>
               </SwiperSlide>
             ))}

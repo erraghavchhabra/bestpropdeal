@@ -44,7 +44,7 @@ export default function PropertySlider({
         >
           {properties.map((item) => (
             <SwiperSlide key={item.id}>
-              <div className="h-[380px] md:h-[420px]">
+              <div className="h-[450px] md:h-[490px]">
                 <PropertyCard property={item} />
               </div>
             </SwiperSlide>

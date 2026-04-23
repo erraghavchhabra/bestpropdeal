@@ -1,5 +1,5 @@
 "use client";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin, Headphones } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -29,27 +29,27 @@ export default function Footer() {
             </Link>
 
             <div className="space-y-4 text-white/65 text-sm">
-  <div className="flex items-start gap-3">
-    <Phone className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
-    <p>+91-7969669900</p>
-  </div>
+              <div className="flex items-start gap-3">
+                <Phone className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
+                <p>+91-7969669900</p>
+              </div>
 
-  <div className="flex items-start gap-3">
-    <Mail className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
-    <p>sales@bestpropdeal.com</p>
-  </div>
+              <div className="flex items-start gap-3">
+                <Mail className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
+                <p>sales@bestpropdeal.com</p>
+              </div>
 
-  <div className="flex items-start gap-3">
-    <MapPin className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
-    <p className="max-w-xs leading-7">
-      B-14, Building Vishwashanti CHS,
-      <br />
-      Vivekanand Nagar, Near Ambika Hotel
-      <br />
-      Badlapur East 421503
-    </p>
-  </div>
-</div>
+              <div className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
+                <p className="max-w-xs leading-7">
+                  B-14, Building Vishwashanti CHS,
+                  <br />
+                  Vivekanand Nagar, Near Ambika Hotel
+                  <br />
+                  Badlapur East 421503
+                </p>
+              </div>
+            </div>
 
             <div className="flex gap-3 mt-7">
               {[FaInstagram, FaFacebookF, FaYoutube, FaWhatsapp].map(
@@ -123,37 +123,43 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* NEWSLETTER */}
+          {/* ✅ CALLBACK FORM (REPLACED NEWSLETTER) */}
           <div>
-            <h4 className="text-lg font-medium mb-6">
-              Subscribe to our newsletter
+            <h4 className="text-lg font-medium mb-4 flex items-center gap-2">
+              <Headphones className="w-5 h-5 text-[#ef4800]" />
+              Get Callback in 30 mins
             </h4>
 
             <p className="text-white/65 text-sm leading-7 mb-6">
-              Stay updated with the latest property deals, market insights, and
-              exclusive offers—delivered straight to your inbox.
+              Looking for the right property? Enter your number and our expert
+              will call you back within 30 minutes.
             </p>
 
             <label className="block text-xs mb-2 text-white/80">
-              Email <span className="text-[#ef4800]">*</span>
+              Phone Number <span className="text-[#ef4800]">*</span>
             </label>
 
             <input
-              type="email"
-              placeholder="Enter your email"
+              type="tel"
+              placeholder="Enter your phone number"
               className="w-full bg-transparent border border-white/20 px-4 py-3 text-sm text-white placeholder:text-white/40 outline-none focus:border-[#ef4800] transition"
             />
 
-            <button className="w-full mt-5 bg-[#ef4800] hover:bg-[#d63f00] text-white rounded-full py-3.5 text-sm font-medium transition">
-              Submit
+            <button className="w-full mt-5 bg-[#ef4800] hover:bg-[#d63f00] text-white rounded-full py-3.5 text-sm font-medium transition flex items-center justify-center gap-2">
+              <Phone className="w-4 h-4" />
+              Get a Free Callback
             </button>
+
+            {/* Trust microcopy */}
+            <p className="text-white/40 text-xs mt-3">
+              🔒 Your number is safe. No spam calls.
+            </p>
           </div>
 
         </div>
 
         <div className="pt-8 text-white/50 text-xs">
           ©{new Date().getFullYear()} by BestpropDeal
-        
         </div>
       </div>
     </footer>
