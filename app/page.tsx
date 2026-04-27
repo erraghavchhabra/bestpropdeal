@@ -6,6 +6,8 @@ import { Property } from "@/components/PropertyCard";
 import WhyChooseUs from "@/components/WhyChooseUs";
 import Testimonials from "@/components/Testimonials";
 import CallToAction from "@/components/CallToAction";
+import BlogSection from "@/components/Blogs";
+import LogoSlider from "@/components/LogoSlider";
 
 const featuredProperties: Property[] = [
   {
@@ -142,7 +144,9 @@ export default function Home() {
       <PropertySlider properties={featuredProperties} />
       <WhyChooseUs />
       <Testimonials />
+      <LogoSlider />
       <CallToAction />
+      <BlogSection />
     </>
   );
 }
