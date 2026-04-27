@@ -12,7 +12,7 @@ export interface Property {
   image: string;
   whatsapp: string;
   phone: string;
-  slug: string;
+  slug?: string;
 
   // Optional fields
   carpetArea?: string;
