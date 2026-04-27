@@ -3,8 +3,10 @@ import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PropertySection from "@/components/propertySections"
 import "swiper/css";
 import { FaWhatsapp } from "react-icons/fa";
+
 
 const inter = Inter({
   subsets: ["latin"],
@@ -38,7 +40,7 @@ export default function RootLayout({
         <Header />
 
         {children}
-
+<PropertySection />
         <Footer />
 
         {/* WhatsApp Floating Button */}

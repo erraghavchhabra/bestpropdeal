@@ -12,6 +12,7 @@ import LogoSlider from "@/components/LogoSlider";
 const featuredProperties: Property[] = [
   {
     id: 1,
+    slug: "panvelkar-greens",
     title: "Panvelkar Greens",
     location: "Joveli, Badlapur East, Thane, Maharashtra",
     price: "₹1.08 Cr - 2.34 Cr",
@@ -22,6 +23,7 @@ const featuredProperties: Property[] = [
   },
   {
     id: 2,
+    slug: "panvelkar-utsav",
     title: "Panvelkar Utsav",
     location: "Valivali Gaon, Badlapur West, Maharashtra",
     price: "₹8.25 Cr - 11.55 Cr",
@@ -32,6 +34,7 @@ const featuredProperties: Property[] = [
   },
   {
     id: 3,
+    slug: "dreamland-dreams-enclave",
     title: "Dreamland Dreams Enclave",
     location: "Belavali, Badlapur West, Thane",
     price: "₹1.54 Cr - 1.75 Cr",
@@ -42,6 +45,7 @@ const featuredProperties: Property[] = [
   },
   {
     id: 4,
+    slug: "panvelkar-greens-2",
     title: "Panvelkar Greens",
     location: "Joveli, Badlapur East, Thane, Maharashtra",
     price: "₹1.08 Cr - 2.34 Cr",
@@ -52,6 +56,7 @@ const featuredProperties: Property[] = [
   },
   {
     id: 5,
+    slug: "panvelkar-utsav-2",
     title: "Panvelkar Utsav",
     location: "Valivali Gaon, Badlapur West, Maharashtra",
     price: "₹8.25 Cr - 11.55 Cr",
@@ -62,6 +67,7 @@ const featuredProperties: Property[] = [
   },
   {
     id: 6,
+    slug: "dreamland-dreams-enclave-2",
     title: "Dreamland Dreams Enclave",
     location: "Belavali, Badlapur West, Thane",
     price: "₹1.54 Cr - 1.75 Cr",
@@ -75,6 +81,7 @@ const featuredProperties: Property[] = [
 const assuredProperties: Property[] = [
   {
     id: 101,
+    slug: "assured-panvelkar-greens",
     title: "Panvelkar Greens",
     location: "Joveli, Badlapur East, Thane, Maharashtra",
     price: "₹1.08 Cr - 2.34 Cr",
@@ -85,6 +92,7 @@ const assuredProperties: Property[] = [
   },
   {
     id: 102,
+    slug: "assured-panvelkar-utsav",
     title: "Panvelkar Utsav",
     location: "Valivali Gaon, Badlapur West, Maharashtra",
     price: "₹8.25 Cr - 11.55 Cr",
@@ -95,6 +103,7 @@ const assuredProperties: Property[] = [
   },
   {
     id: 103,
+    slug: "assured-dreamland-dreams-enclave",
     title: "Dreamland Dreams Enclave",
     location: "Belavali, Badlapur West, Thane",
     price: "₹1.54 Cr - 1.75 Cr",
@@ -103,8 +112,9 @@ const assuredProperties: Property[] = [
     whatsapp: "919999999999",
     phone: "919999999999",
   },
-   {
+  {
     id: 104,
+    slug: "assured-panvelkar-greens-2",
     title: "Panvelkar Greens",
     location: "Joveli, Badlapur East, Thane, Maharashtra",
     price: "₹1.08 Cr - 2.34 Cr",
@@ -115,6 +125,7 @@ const assuredProperties: Property[] = [
   },
   {
     id: 105,
+    slug: "assured-panvelkar-utsav-2",
     title: "Panvelkar Utsav",
     location: "Valivali Gaon, Badlapur West, Maharashtra",
     price: "₹8.25 Cr - 11.55 Cr",
@@ -125,6 +136,7 @@ const assuredProperties: Property[] = [
   },
   {
     id: 106,
+    slug: "assured-dreamland-dreams-enclave-2",
     title: "Dreamland Dreams Enclave",
     location: "Belavali, Badlapur West, Thane",
     price: "₹1.54 Cr - 1.75 Cr",
@@ -134,7 +146,6 @@ const assuredProperties: Property[] = [
     phone: "919999999999",
   },
 ];
-
 export default function Home() {
   return (
     <>

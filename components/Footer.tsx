@@ -42,28 +42,44 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
                 <p className="max-w-xs leading-7">
-                  B-14, Building Vishwashanti CHS,
-                  <br />
-                  Vivekanand Nagar, Near Ambika Hotel
-                  <br />
-                  Badlapur East 421503
+                  567Q+FV2 Gandhi Chowk, Bestpropdeal Head offfice, opp. Pm shri Digital School, Patil Pada, Station Pada, Badlapur, Maharashtra 421503
                 </p>
               </div>
             </div>
 
             <div className="flex gap-3 mt-7">
-              {[FaInstagram, FaFacebookF, FaYoutube, FaWhatsapp].map(
-                (Icon, i) => (
-                  <a
-                    key={i}
-                    href="#"
-                    className="w-10 h-10 rounded-full bg-white text-black hover:bg-[#ef4800] hover:text-white flex items-center justify-center transition"
-                  >
-                    <Icon className="w-4 h-4" />
-                  </a>
-                )
-              )}
-            </div>
+  {[
+    {
+      Icon: FaInstagram,
+      hover: "hover:bg-gradient-to-tr hover:from-pink-500 hover:via-red-500 hover:to-yellow-500",
+    },
+    {
+      Icon: FaFacebookF,
+      hover: "hover:bg-[#1877F2]",
+    },
+    {
+      Icon: FaYoutube,
+      hover: "hover:bg-[#FF0000]",
+    },
+    {
+      Icon: FaWhatsapp,
+      hover: "hover:bg-[#25D366]",
+    },
+  ].map((social, i) => (
+    <a
+      key={i}
+      href="#"
+      className={`w-10 h-10 rounded-full bg-white text-black hover:text-white flex items-center justify-center transition duration-300 ${social.hover}`}
+    >
+      <social.Icon className="w-4 h-4" />
+    </a>
+  ))}
+</div>
+<div className="pt-8 text-white/50 text-xs space-y-2">
+  <p className="text-[#ef4800]">
+    Rera ID : <span className="text-white/70">A51700007696</span>
+  </p>
+</div>
           </div>
 
           {/* NAVIGATION */}
