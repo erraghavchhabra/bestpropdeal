@@ -4,6 +4,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, CalendarDays } from "lucide-react";
 import { API } from "@/lib/api"; // adjust path as needed
 
+// ─── Force runtime rendering (no static export) ───────────────────────────────
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type WPPost = {
@@ -53,22 +57,29 @@ function getFeaturedImage(post: WPPost): string {
 // ─── Data Fetching ────────────────────────────────────────────────────────────
 
 async function getPostBySlug(slug: string): Promise<WPPost | null> {
-  console.log("slug",slug);
-  const res = await fetch(`${API.blogs}?slug=${slug}&_embed`, {
-    next: { revalidate: 60 }, // ISR: revalidate every 60s
-  });
-  if (!res.ok) return null;
-  const data: WPPost[] = await res.json();
-  return data[0] ?? null;
+  try {
+    const res = await fetch(`${API.blogs}?slug=${slug}&_embed`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    const data: WPPost[] = await res.json();
+    return data[0] ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function getOtherPosts(excludeSlug: string): Promise<WPPost[]> {
-  const res = await fetch(`${API.blogs}?_embed&per_page=5`, {
-    next: { revalidate: 60 },
-  });
-  if (!res.ok) return [];
-  const data: WPPost[] = await res.json();
-  return data.filter((p) => p.slug !== excludeSlug);
+  try {
+    const res = await fetch(`${API.blogs}?_embed&per_page=5`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return [];
+    const data: WPPost[] = await res.json();
+    return data.filter((p) => p.slug !== excludeSlug);
+  } catch {
+    return [];
+  }
 }
 
 // ─── Static Params ────────────────────────────────────────────────────────────
