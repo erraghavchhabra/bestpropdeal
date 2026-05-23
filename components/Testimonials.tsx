@@ -10,6 +10,17 @@ import "swiper/css/navigation";
 
 import { API } from "@/lib/api";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Testimonial {
+  id: string | number;
+  quote: string;
+  name: string;
+  role?: string;
+  rating?: number | string;
+  video_url?: string | null;
+  image?: { medium?: string; full?: string } | null;
+}
+
 // ─── Skeletons ────────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
@@ -39,10 +50,10 @@ function VideoSkeleton() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function Testimonials() {
-  const [textTestimonials, setTextTestimonials]   = useState([]);
-  const [videoTestimonials, setVideoTestimonials] = useState([]);
+  const [textTestimonials, setTextTestimonials]   = useState<Testimonial[]>([]);
+  const [videoTestimonials, setVideoTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+  const [error, setError]     = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
@@ -54,7 +65,7 @@ export default function Testimonials() {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        const list = Array.isArray(json) ? json : json.data ?? [];
+        const list: Testimonial[] = Array.isArray(json) ? json : json.data ?? [];
         setTextTestimonials(list.filter((t) => !t.video_url));
         setVideoTestimonials(list.filter((t) =>  t.video_url));
       } catch (err) {
@@ -156,7 +167,7 @@ export default function Testimonials() {
               <SwiperSlide key={item.id}>
                 <div className="relative group rounded-[2rem] overflow-hidden cursor-pointer h-[320px]">
                   <video
-                    src={item.video_url}
+                    src={item.video_url ?? undefined}
                     className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
                     autoPlay muted loop playsInline
                   />

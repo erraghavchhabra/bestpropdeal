@@ -4,6 +4,17 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { API } from "@/lib/api";
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Blog {
+  id: number;
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  link: string;
+  image: string | null;
+}
+
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
@@ -24,7 +35,7 @@ function SkeletonCard() {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function formatDate(dateStr) {
+function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString("en-IN", {
     year: "numeric",
     month: "long",
@@ -32,25 +43,24 @@ function formatDate(dateStr) {
   });
 }
 
-function stripHtml(html = "") {
+function stripHtml(html: string = ""): string {
   return html.replace(/<[^>]*>/g, "").replace(/&hellip;/g, "…").trim();
 }
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function BlogSection() {
-  const [blogs, setBlogs]     = useState([]);
+  const [blogs, setBlogs]     = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState(null);
+  const [error, setError]     = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchBlogs() {
       try {
-        // _embed pulls wp:featuredmedia so we get the image in one request
         const res = await fetch(`${API.blogs}?per_page=3&_embed`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
 
-        const mapped = json.map((post) => ({
+        const mapped: Blog[] = json.map((post: any) => ({
           id:      post.id,
           slug:    post.slug,
           title:   post.title?.rendered ?? "",
@@ -103,8 +113,6 @@ export default function BlogSection() {
                 <a
                   key={blog.id}
                   href={`/blogs/${blog.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="group rounded-[2rem] overflow-hidden border border-white/10 bg-white/[0.03] backdrop-blur-sm block"
                 >
                   {/* Image */}
@@ -116,7 +124,6 @@ export default function BlogSection() {
                         className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
                       />
                     ) : (
-                      // Fallback if no featured image set
                       <div className="w-full h-full flex items-center justify-center bg-white/[0.03]">
                         <span className="text-white/20 text-sm">No Image</span>
                       </div>

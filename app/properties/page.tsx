@@ -27,22 +27,43 @@ interface ApiProperty {
   status: string[];
   whatsapp?: string;
   phone?: string;
+  rera_id?: string;
+  bhk_configs?: {
+    type: string;
+    price: string;
+    label: string;
+    carpet_area: string;
+    floor_plan_url?: string;
+  }[];
 }
 
 function mapToProperty(p: ApiProperty): Property {
   return {
-    id: p.id,
-    slug: p.slug,
-    title: p.title,
-    location: p.locality,
-    price: p.price_label || p.price,
-    type: p.bhk,
-    image: p.thumbnail,
-    carpetArea: p.carpet_area ? `${p.carpet_area} sq.ft` : "",
-    possession: p.possession,
-    status: p.status?.[0] ?? "",
-    whatsapp: p.whatsapp || "919999999999",
-    phone: p.phone || "919999999999",
+    id:          p.id,
+    slug:        p.slug,
+    title:       p.title,
+    location:    p.locality,
+    price:       p.price_label || p.price,
+    type:        p.bhk,
+    image:       p.thumbnail,
+    possession:  p.possession,
+    status:      p.status?.[0] ?? "",
+    rera:        p.rera_id ?? "",
+    whatsapp:    p.whatsapp  || "919999999999",
+    phone:       p.phone     || "919999999999",
+    // If API returns bhk_configs use them, otherwise synthesise one from flat fields
+    bhk_configs: p.bhk_configs?.length
+      ? p.bhk_configs
+      : p.carpet_area || p.price_label
+        ? [
+            {
+              type:       p.bhk        || "",
+              price:      p.price      || "",
+              label:      p.price_label|| "",
+              carpet_area: p.carpet_area || "",
+            },
+          ]
+        : undefined,
   };
 }
 
@@ -59,7 +80,6 @@ function SkeletonCard() {
   );
 }
 
-// Applied filters shape
 interface AppliedFilters {
   carpet: string;
   bhk: string;
@@ -99,48 +119,30 @@ function PropertiesPageInner() {
     "High Rise Towers in Thane",
   ];
 
-  // ---------- Refs ----------
   const searchWrapperRef = useRef<HTMLDivElement>(null);
 
-  // ---------- UI States ----------
   const [showFilters, setShowFilters] = useState(false);
-
-  // Location
   const [locationInput, setLocationInput] = useState("");
   const [filteredCities, setFilteredCities] = useState<string[]>(cities);
   const [showSuggestions, setShowSuggestions] = useState(false);
-
-  // Project Search
   const [projectInput, setProjectInput] = useState("");
   const [projectSuggestions, setProjectSuggestions] = useState<string[]>([]);
   const [showProjectSuggestions, setShowProjectSuggestions] = useState(false);
-
-  // Budget
   const [budgetOpen, setBudgetOpen] = useState(false);
   const [minBudget, setMinBudget] = useState(10);
   const [maxBudget, setMaxBudget] = useState(500);
-
-  // Bedrooms
   const [bedroomOpen, setBedroomOpen] = useState(false);
   const [selectedBedrooms, setSelectedBedrooms] = useState<string[]>([]);
-
-  // Property Type
   const [typeOpen, setTypeOpen] = useState(false);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>([]);
 
-  // ---------- Helpers ----------
   const formatBudget = (val: number) =>
     val >= 100
       ? `₹${(val / 100).toFixed(val % 100 === 0 ? 0 : 1)}Cr`
       : `₹${val}L`;
 
-  const handleMinBudget = (value: number) => {
-    setMinBudget(Math.min(value, maxBudget - 5));
-  };
-
-  const handleMaxBudget = (value: number) => {
-    setMaxBudget(Math.max(value, minBudget + 5));
-  };
+  const handleMinBudget = (value: number) => setMinBudget(Math.min(value, maxBudget - 5));
+  const handleMaxBudget = (value: number) => setMaxBudget(Math.max(value, minBudget + 5));
 
   const toggleSelection = (
     value: string,
@@ -165,10 +167,7 @@ function PropertiesPageInner() {
   const handleLocationChange = (value: string) => {
     setLocationInput(value);
     if (value.trim()) {
-      const filtered = cities.filter((city) =>
-        city.toLowerCase().includes(value.toLowerCase()),
-      );
-      setFilteredCities(filtered);
+      setFilteredCities(cities.filter((c) => c.toLowerCase().includes(value.toLowerCase())));
       setShowSuggestions(true);
     } else {
       setFilteredCities(cities);
@@ -180,10 +179,7 @@ function PropertiesPageInner() {
     setProjectInput(value);
     setShowFilters(true);
     if (value.trim()) {
-      const filtered = allProjectSuggestions.filter((item) =>
-        item.toLowerCase().includes(value.toLowerCase()),
-      );
-      setProjectSuggestions(filtered);
+      setProjectSuggestions(allProjectSuggestions.filter((i) => i.toLowerCase().includes(value.toLowerCase())));
       setShowProjectSuggestions(true);
     } else {
       setProjectSuggestions([]);
@@ -191,13 +187,9 @@ function PropertiesPageInner() {
     }
   };
 
-  // ---------- Click Outside ----------
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchWrapperRef.current &&
-        !searchWrapperRef.current.contains(event.target as Node)
-      ) {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target as Node)) {
         setShowFilters(false);
         closeAllDropdowns();
       }
@@ -206,46 +198,32 @@ function PropertiesPageInner() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ---------- URL Params ----------
   const searchParams = useSearchParams();
-  const urlBhk = searchParams.get("bhk") || "";
+  const urlBhk          = searchParams.get("bhk")           || "";
   const urlPropertyType = searchParams.get("property_type") || "";
-  const urlCity = searchParams.get("city") || "";
-  const urlProject = searchParams.get("project") || "";
+  const urlCity         = searchParams.get("city")          || "";
+  const urlProject      = searchParams.get("project")       || "";
 
-  // ---------- Data States ----------
   const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
+  const [loading, setLoading]       = useState(true);
+  const [total, setTotal]           = useState(0);
+  const [page, setPage]             = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const PER_PAGE = 12;
 
-  // Filter UI state — pre-filled from URL
-  const [carpet, setCarpet] = useState("");
-  const [bhk, setBhk] = useState(urlBhk);
+  const [carpet, setCarpet]             = useState("");
+  const [bhk, setBhk]                   = useState(urlBhk);
   const [propertyType, setPropertyType] = useState(urlPropertyType);
-  const [city, setCity] = useState(urlCity);
-  const [search, setSearch] = useState(urlProject);
+  const [city, setCity]                 = useState(urlCity);
+  const [search, setSearch]             = useState(urlProject);
 
-  // Pre-fill search bar inputs from URL params on mount
   useEffect(() => {
     if (urlCity) setLocationInput(urlCity);
     if (urlProject) setProjectInput(urlProject);
-    if (urlBhk) {
-      // Convert "2-bhk" → "2 BHK" to match bedroomOptions format
-      const formatted = urlBhk.replace(/-/g, " ").toUpperCase();
-      setSelectedBedrooms([formatted]);
-    }
-    if (urlPropertyType) {
-      // Convert "duplex" → "Duplex" to match propertyTypes format
-      const formatted =
-        urlPropertyType.charAt(0).toUpperCase() + urlPropertyType.slice(1);
-      setSelectedPropertyTypes([formatted]);
-    }
+    if (urlBhk) setSelectedBedrooms([urlBhk.replace(/-/g, " ").toUpperCase()]);
+    if (urlPropertyType) setSelectedPropertyTypes([urlPropertyType.charAt(0).toUpperCase() + urlPropertyType.slice(1)]);
   }, [urlBhk, urlPropertyType, urlCity, urlProject]);
 
-  // Applied filters (what actually triggers fetch)
   const [applied, setApplied] = useState<AppliedFilters>({
     carpet: "",
     bhk: urlBhk,
@@ -256,145 +234,92 @@ function PropertiesPageInner() {
     max_budget: 500,
   });
 
-  // ── Fetch ────────────────────────────────────────────────────────────────
-  const fetchProperties = useCallback(
-    async (filters: AppliedFilters, pg: number) => {
-      try {
-        setLoading(true);
+  const fetchProperties = useCallback(async (filters: AppliedFilters, pg: number) => {
+    try {
+      setLoading(true);
+      const params: Record<string, string | number> = { page: pg, per_page: PER_PAGE };
+      if (filters.bhk)          params.bhk           = filters.bhk.toLowerCase().replace(/\s+/g, "-");
+      if (filters.property_type) params.property_type = filters.property_type.toLowerCase().replace(/\s+/g, "-");
+      if (filters.city)         params.city          = filters.city.toLowerCase().replace(/\s+/g, "-");
+      if (filters.search)       params.search        = filters.search;
+      if (filters.min_budget > 10)  params.min_budget = filters.min_budget;
+      if (filters.max_budget < 500) params.max_budget = filters.max_budget;
 
-        const params: Record<string, string | number> = {
-          page: pg,
-          per_page: PER_PAGE,
-        };
+      const res = await fetch(API.properties(params));
+      if (!res.ok) throw new Error("Failed to fetch");
+      const json = await res.json();
 
-        if (filters.bhk)
-          params.bhk = filters.bhk.toLowerCase().replace(/\s+/g, "-");
-        if (filters.property_type)
-          params.property_type = filters.property_type
-            .toLowerCase()
-            .replace(/\s+/g, "-");
-        if (filters.city)
-          params.city = filters.city.toLowerCase().replace(/\s+/g, "-");
-        if (filters.search) params.search = filters.search;
-        if (filters.min_budget && filters.min_budget > 10)
-          params.min_budget = filters.min_budget;
-        if (filters.max_budget && filters.max_budget < 500)
-          params.max_budget = filters.max_budget;
+      setProperties((json.data as ApiProperty[]).map(mapToProperty));
+      setTotal(json.total);
+      setTotalPages(json.total_pages);
+    } catch (err) {
+      console.error(err);
+      setProperties([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        const res = await fetch(API.properties(params));
-        if (!res.ok) throw new Error("Failed to fetch");
+  useEffect(() => { fetchProperties(applied, page); }, [applied, page, fetchProperties]);
 
-        const json = await res.json();
-        setProperties((json.data as ApiProperty[]).map(mapToProperty));
-        setTotal(json.total);
-        setTotalPages(json.total_pages);
-      } catch (err) {
-        console.error(err);
-        setProperties([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
-
-  useEffect(() => {
-    fetchProperties(applied, page);
-  }, [applied, page, fetchProperties]);
-
-  // ── Client-side carpet filter ────────────────────────────────────────────
+  // Client-side carpet filter — uses bhk_configs[0].carpet_area
   const filtered = useMemo(() => {
     if (!applied.carpet) return properties;
     return properties.filter((p) => {
-      const val = parseInt(p.carpetArea || "0");
-      if (applied.carpet === "700") return val <= 700;
+      const raw = p.bhk_configs?.[0]?.carpet_area ?? "";
+      const val = parseInt(raw || "0");
+      if (applied.carpet === "700")  return val <= 700;
       if (applied.carpet === "1200") return val > 700 && val <= 1200;
       if (applied.carpet === "1201") return val > 1200;
       return true;
     });
   }, [properties, applied.carpet]);
 
-  // ---------- Search Handler (FIXED) ----------
   const handleSearch = () => {
-    // Sync search-bar UI state into filter state
     setCity(locationInput);
     setSearch(projectInput);
     setBhk(selectedBedrooms[0] ?? "");
     setPropertyType(selectedPropertyTypes[0] ?? "");
-
-    // Apply — this triggers fetchProperties()
     setPage(1);
     setApplied({
       carpet,
-      city: locationInput,
-      search: projectInput,
-      bhk: selectedBedrooms[0] ?? "",
+      city:          locationInput,
+      search:        projectInput,
+      bhk:           selectedBedrooms[0]      ?? "",
       property_type: selectedPropertyTypes[0] ?? "",
-      min_budget: minBudget,
-      max_budget: maxBudget,
+      min_budget:    minBudget,
+      max_budget:    maxBudget,
     });
-
     closeAllDropdowns();
   };
 
-  // ---------- Clear Filters ----------
   const handleClearAll = () => {
-    // Reset UI state
-    setLocationInput("");
-    setProjectInput("");
-    setSelectedBedrooms([]);
-    setSelectedPropertyTypes([]);
-    setMinBudget(10);
-    setMaxBudget(500);
-    setShowFilters(false);
-    setFilteredCities(cities);
-    setProjectSuggestions([]);
+    setLocationInput(""); setProjectInput(""); setSelectedBedrooms([]);
+    setSelectedPropertyTypes([]); setMinBudget(10); setMaxBudget(500);
+    setShowFilters(false); setFilteredCities(cities); setProjectSuggestions([]);
     closeAllDropdowns();
-
-    // Reset filter state
-    setCarpet("");
-    setBhk("");
-    setPropertyType("");
-    setCity("");
-    setSearch("");
-
-    // Apply reset — triggers new fetch
+    setCarpet(""); setBhk(""); setPropertyType(""); setCity(""); setSearch("");
     setPage(1);
-    setApplied({
-      carpet: "",
-      bhk: "",
-      property_type: "",
-      city: "",
-      search: "",
-      min_budget: 10,
-      max_budget: 500,
-    });
+    setApplied({ carpet: "", bhk: "", property_type: "", city: "", search: "", min_budget: 10, max_budget: 500 });
   };
 
-  // ── Heading label ────────────────────────────────────────────────────────
   const headingLabel = applied.property_type || applied.bhk || "All";
-  const headingCity = applied.city || "Properties";
+  const headingCity  = applied.city || "Properties";
 
   return (
     <section className="bg-[#0f0f0f] min-h-screen lg:pt-40 lg:pb-20 py-30 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
+
         {/* Heading */}
         <div className="mb-2">
           <h1 className="mt-0 text-2xl md:text-2xl text-white font-light">
             {headingLabel !== "All" ? (
-              <>
-                <span className="font-semibold">{headingLabel}</span> in{" "}
-                {headingCity}
-              </>
+              <><span className="font-semibold">{headingLabel}</span> in {headingCity}</>
             ) : (
-              <>
-                All <span className="font-semibold">{headingCity}</span>
-              </>
+              <>All <span className="font-semibold">{headingCity}</span></>
             )}
           </h1>
-          <p className="text-white/60 mt-3">
-            {loading ? "Loading..." : `${total} properties found`}
-          </p>
+          <p className="text-white/60 mt-3">{loading ? "Loading..." : `${total} properties found`}</p>
         </div>
 
         {/* Search Box */}
@@ -403,7 +328,6 @@ function PropertiesPageInner() {
           className="mt-2 mb-6 rounded-[24px] border border-white/10 bg-white/5 backdrop-blur-2xl shadow-[0_20px_60px_rgba(0,0,0,0.45)] overflow-visible relative z-50"
         >
           <div className="p-2 sm:p-3">
-            {/* Main Row */}
             <div className="bg-white/[0.04] backdrop-blur-xl border border-white/10 rounded-[24px] lg:rounded-full flex flex-col lg:flex-row lg:items-center lg:flex-nowrap overflow-visible gap-2 lg:gap-0 px-2 lg:px-2">
 
               {/* Location */}
@@ -411,10 +335,7 @@ function PropertiesPageInner() {
                 <input
                   value={locationInput}
                   onChange={(e) => handleLocationChange(e.target.value)}
-                  onFocus={() => {
-                    setFilteredCities(cities);
-                    setShowSuggestions(true);
-                  }}
+                  onFocus={() => { setFilteredCities(cities); setShowSuggestions(true); }}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Location"
                   suppressHydrationWarning
@@ -423,36 +344,18 @@ function PropertiesPageInner() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (showSuggestions) {
-                      setShowSuggestions(false);
-                    } else {
-                      setFilteredCities(
-                        locationInput.trim()
-                          ? cities.filter((c) =>
-                              c.toLowerCase().includes(locationInput.toLowerCase()),
-                            )
-                          : cities,
-                      );
-                      setShowSuggestions(true);
-                    }
+                    if (showSuggestions) { setShowSuggestions(false); }
+                    else { setFilteredCities(locationInput.trim() ? cities.filter((c) => c.toLowerCase().includes(locationInput.toLowerCase())) : cities); setShowSuggestions(true); }
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50"
                 >
                   <ChevronDown size={16} />
                 </button>
-
                 {showSuggestions && filteredCities.length > 0 && (
                   <div className="absolute top-full left-0 mt-2 w-full bg-[#111111]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/10 z-[999] overflow-hidden">
                     {filteredCities.map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() => {
-                          setLocationInput(c);
-                          setShowSuggestions(false);
-                        }}
-                        className="block w-full text-left px-4 py-3 text-xs text-white/80 hover:bg-[#ef4800] hover:text-white transition"
-                      >
+                      <button key={c} type="button" onClick={() => { setLocationInput(c); setShowSuggestions(false); }}
+                        className="block w-full text-left px-4 py-3 text-xs text-white/80 hover:bg-[#ef4800] hover:text-white transition">
                         {c}
                       </button>
                     ))}
@@ -460,21 +363,17 @@ function PropertiesPageInner() {
                 )}
               </div>
 
-              {/* Divider */}
               <div className="hidden lg:block h-8 w-px bg-white/10 self-center" />
 
               {/* Project Search */}
-              <div className="relative w-full lg:flex-1 lg:max-w-[450px] xl:max-w-[450px]">
+              <div className="relative w-full lg:flex-1 lg:max-w-[450px]">
                 <input
                   value={projectInput}
                   onChange={(e) => handleProjectChange(e.target.value)}
                   onFocus={() => {
                     setShowFilters(true);
                     if (projectInput.trim().length > 0) {
-                      const filtered = allProjectSuggestions.filter((item) =>
-                        item.toLowerCase().includes(projectInput.toLowerCase()),
-                      );
-                      setProjectSuggestions(filtered);
+                      setProjectSuggestions(allProjectSuggestions.filter((i) => i.toLowerCase().includes(projectInput.toLowerCase())));
                       setShowProjectSuggestions(true);
                     }
                   }}
@@ -482,19 +381,11 @@ function PropertiesPageInner() {
                   placeholder='Search for Project "The Altitude"'
                   className="w-full h-[52px] sm:h-[54px] px-5 sm:px-6 text-[14px] sm:text-[15px] text-white placeholder:text-white/40 outline-none bg-transparent"
                 />
-
                 {showProjectSuggestions && projectSuggestions.length > 0 && (
                   <div className="absolute top-full left-0 mt-2 w-full bg-[#111111]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/10 z-[999] overflow-hidden max-h-[320px] overflow-y-auto">
                     {projectSuggestions.map((item, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => {
-                          setProjectInput(item);
-                          setShowProjectSuggestions(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition border-b border-white/5 last:border-0"
-                      >
+                      <button key={index} type="button" onClick={() => { setProjectInput(item); setShowProjectSuggestions(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-white/5 transition border-b border-white/5 last:border-0">
                         <Search size={14} className="text-[#ef4800] flex-shrink-0" />
                         <span className="text-xs sm:text-sm text-white/80">{item}</span>
                       </button>
@@ -503,28 +394,15 @@ function PropertiesPageInner() {
                 )}
               </div>
 
-              {/* Divider */}
               <div className="hidden lg:block h-8 w-px bg-white/10 self-center" />
 
               {/* Budget */}
               <div className="relative w-full lg:w-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeAllDropdowns();
-                    setBudgetOpen((prev) => !prev);
-                  }}
-                  className="w-full lg:w-auto h-[52px] px-4 rounded-full lg:rounded-none lg:bg-transparent bg-white/[0.04] text-white text-xs font-medium flex items-center justify-between lg:justify-center gap-2"
-                >
-                  <span className="truncate">
-                    {formatBudget(minBudget)} – {formatBudget(maxBudget)}
-                  </span>
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform flex-shrink-0 ${budgetOpen ? "rotate-180" : ""}`}
-                  />
+                <button type="button" onClick={() => { closeAllDropdowns(); setBudgetOpen((p) => !p); }}
+                  className="w-full lg:w-auto h-[52px] px-4 rounded-full lg:rounded-none lg:bg-transparent bg-white/[0.04] text-white text-xs font-medium flex items-center justify-between lg:justify-center gap-2">
+                  <span className="truncate">{formatBudget(minBudget)} – {formatBudget(maxBudget)}</span>
+                  <ChevronDown size={14} className={`transition-transform flex-shrink-0 ${budgetOpen ? "rotate-180" : ""}`} />
                 </button>
-
                 {budgetOpen && (
                   <div className="absolute top-full left-0 mt-2 w-full sm:w-[320px] bg-[#111111]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/10 z-[999] p-5">
                     <div className="space-y-5">
@@ -533,30 +411,14 @@ function PropertiesPageInner() {
                           <span className="text-xs font-medium text-white/70">Min Budget</span>
                           <span className="text-xs font-semibold text-[#ef4800]">{formatBudget(minBudget)}</span>
                         </div>
-                        <input
-                          type="range"
-                          min="5"
-                          max="495"
-                          step="5"
-                          value={minBudget}
-                          onChange={(e) => handleMinBudget(Number(e.target.value))}
-                          className="w-full accent-[#ef4800]"
-                        />
+                        <input type="range" min="5" max="495" step="5" value={minBudget} onChange={(e) => handleMinBudget(Number(e.target.value))} className="w-full accent-[#ef4800]" />
                       </div>
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-xs font-medium text-white/70">Max Budget</span>
                           <span className="text-xs font-semibold text-[#ef4800]">{formatBudget(maxBudget)}</span>
                         </div>
-                        <input
-                          type="range"
-                          min="10"
-                          max="500"
-                          step="5"
-                          value={maxBudget}
-                          onChange={(e) => handleMaxBudget(Number(e.target.value))}
-                          className="w-full accent-[#ef4800]"
-                        />
+                        <input type="range" min="10" max="500" step="5" value={maxBudget} onChange={(e) => handleMaxBudget(Number(e.target.value))} className="w-full accent-[#ef4800]" />
                       </div>
                     </div>
                   </div>
@@ -565,41 +427,19 @@ function PropertiesPageInner() {
 
               {/* Bedrooms */}
               <div className="relative w-full lg:w-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeAllDropdowns();
-                    setBedroomOpen((prev) => !prev);
-                  }}
-                  className="w-full lg:w-auto h-[52px] px-4 rounded-full lg:rounded-none lg:bg-transparent bg-white/[0.04] text-white text-xs font-medium flex items-center justify-between lg:justify-center gap-2"
-                >
-                  <span>
-                    Bedrooms{selectedBedrooms.length > 0 && ` (${selectedBedrooms.length})`}
-                  </span>
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform ${bedroomOpen ? "rotate-180" : ""}`}
-                  />
+                <button type="button" onClick={() => { closeAllDropdowns(); setBedroomOpen((p) => !p); }}
+                  className="w-full lg:w-auto h-[52px] px-4 rounded-full lg:rounded-none lg:bg-transparent bg-white/[0.04] text-white text-xs font-medium flex items-center justify-between lg:justify-center gap-2">
+                  <span>Bedrooms{selectedBedrooms.length > 0 && ` (${selectedBedrooms.length})`}</span>
+                  <ChevronDown size={14} className={`transition-transform ${bedroomOpen ? "rotate-180" : ""}`} />
                 </button>
-
                 {bedroomOpen && (
                   <div className="absolute top-full left-0 mt-2 w-full sm:w-72 bg-[#111111]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/10 z-[999] p-4">
                     <div className="flex flex-wrap gap-2">
                       {bedroomOptions.map((bedroom) => {
                         const active = selectedBedrooms.includes(bedroom);
                         return (
-                          <button
-                            key={bedroom}
-                            type="button"
-                            onClick={() =>
-                              toggleSelection(bedroom, selectedBedrooms, setSelectedBedrooms)
-                            }
-                            className={`px-4 py-2 rounded-full text-xs font-medium transition border ${
-                              active
-                                ? "bg-[#ef4800] text-white border-[#ef4800]"
-                                : "bg-white/[0.04] text-white/80 border-white/10 hover:border-[#ef4800]"
-                            }`}
-                          >
+                          <button key={bedroom} type="button" onClick={() => toggleSelection(bedroom, selectedBedrooms, setSelectedBedrooms)}
+                            className={`px-4 py-2 rounded-full text-xs font-medium transition border ${active ? "bg-[#ef4800] text-white border-[#ef4800]" : "bg-white/[0.04] text-white/80 border-white/10 hover:border-[#ef4800]"}`}>
                             {bedroom}
                           </button>
                         );
@@ -608,19 +448,9 @@ function PropertiesPageInner() {
                     {selectedBedrooms.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4">
                         {selectedBedrooms.map((item) => (
-                          <div
-                            key={item}
-                            className="flex items-center gap-1 bg-[#ef4800]/20 text-[#ef4800] px-3 py-1.5 rounded-full text-xs font-semibold"
-                          >
+                          <div key={item} className="flex items-center gap-1 bg-[#ef4800]/20 text-[#ef4800] px-3 py-1.5 rounded-full text-xs font-semibold">
                             {item}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSelectedBedrooms(selectedBedrooms.filter((b) => b !== item))
-                              }
-                            >
-                              <X size={12} />
-                            </button>
+                            <button type="button" onClick={() => setSelectedBedrooms(selectedBedrooms.filter((b) => b !== item))}><X size={12} /></button>
                           </div>
                         ))}
                       </div>
@@ -631,41 +461,19 @@ function PropertiesPageInner() {
 
               {/* Property Type */}
               <div className="relative w-full lg:w-auto">
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeAllDropdowns();
-                    setTypeOpen((prev) => !prev);
-                  }}
-                  className="w-full lg:w-auto h-[52px] px-4 rounded-full lg:rounded-none lg:bg-transparent bg-white/[0.04] text-white text-xs font-medium flex items-center justify-between lg:justify-center gap-2"
-                >
-                  <span>
-                    Property Type{selectedPropertyTypes.length > 0 && ` (${selectedPropertyTypes.length})`}
-                  </span>
-                  <ChevronDown
-                    size={14}
-                    className={`transition-transform ${typeOpen ? "rotate-180" : ""}`}
-                  />
+                <button type="button" onClick={() => { closeAllDropdowns(); setTypeOpen((p) => !p); }}
+                  className="w-full lg:w-auto h-[52px] px-4 rounded-full lg:rounded-none lg:bg-transparent bg-white/[0.04] text-white text-xs font-medium flex items-center justify-between lg:justify-center gap-2">
+                  <span>Property Type{selectedPropertyTypes.length > 0 && ` (${selectedPropertyTypes.length})`}</span>
+                  <ChevronDown size={14} className={`transition-transform ${typeOpen ? "rotate-180" : ""}`} />
                 </button>
-
                 {typeOpen && (
                   <div className="absolute top-full left-0 mt-2 w-full sm:w-80 bg-[#111111]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/10 z-[999] p-4">
                     <div className="flex flex-wrap gap-2">
                       {propertyTypes.map((type) => {
                         const active = selectedPropertyTypes.includes(type);
                         return (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() =>
-                              toggleSelection(type, selectedPropertyTypes, setSelectedPropertyTypes)
-                            }
-                            className={`px-4 py-2 rounded-full text-xs font-medium transition border ${
-                              active
-                                ? "bg-[#ef4800] text-white border-[#ef4800]"
-                                : "bg-white/[0.04] text-white/80 border-white/10 hover:border-[#ef4800]"
-                            }`}
-                          >
+                          <button key={type} type="button" onClick={() => toggleSelection(type, selectedPropertyTypes, setSelectedPropertyTypes)}
+                            className={`px-4 py-2 rounded-full text-xs font-medium transition border ${active ? "bg-[#ef4800] text-white border-[#ef4800]" : "bg-white/[0.04] text-white/80 border-white/10 hover:border-[#ef4800]"}`}>
                             {type}
                           </button>
                         );
@@ -674,19 +482,9 @@ function PropertiesPageInner() {
                     {selectedPropertyTypes.length > 0 && (
                       <div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-4">
                         {selectedPropertyTypes.map((item) => (
-                          <div
-                            key={item}
-                            className="flex items-center gap-1 bg-[#ef4800]/20 text-[#ef4800] px-3 py-1.5 rounded-full text-xs font-semibold"
-                          >
+                          <div key={item} className="flex items-center gap-1 bg-[#ef4800]/20 text-[#ef4800] px-3 py-1.5 rounded-full text-xs font-semibold">
                             {item}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSelectedPropertyTypes(selectedPropertyTypes.filter((t) => t !== item))
-                              }
-                            >
-                              <X size={12} />
-                            </button>
+                            <button type="button" onClick={() => setSelectedPropertyTypes(selectedPropertyTypes.filter((t) => t !== item))}><X size={12} /></button>
                           </div>
                         ))}
                       </div>
@@ -695,25 +493,18 @@ function PropertiesPageInner() {
                 )}
               </div>
 
-              {/* Clear All */}
-              <button
-                type="button"
-                onClick={handleClearAll}
-                className="w-full lg:w-auto h-[52px] px-4 text-xs font-semibold text-white/70 hover:text-[#ef4800] transition"
-              >
+              {/* Clear */}
+              <button type="button" onClick={handleClearAll}
+                className="w-full lg:w-auto h-[52px] px-4 text-xs font-semibold text-white/70 hover:text-[#ef4800] transition">
                 CLEAR
               </button>
 
-              {/* Divider */}
               <div className="hidden lg:block h-8 w-px bg-white/10 self-center" />
 
               {/* Search Button */}
               <div className="p-2 lg:p-2">
-                <button
-                  type="button"
-                  onClick={handleSearch}
-                  className="w-full lg:w-auto h-[46px] px-6 bg-[#ef4800] hover:bg-[#b90002] text-white rounded-full text-xs font-semibold flex items-center justify-center gap-2 transition shadow-lg"
-                >
+                <button type="button" onClick={handleSearch}
+                  className="w-full lg:w-auto h-[46px] px-6 bg-[#ef4800] hover:bg-[#b90002] text-white rounded-full text-xs font-semibold flex items-center justify-center gap-2 transition shadow-lg">
                   <Search size={16} />
                   Search
                 </button>
@@ -729,51 +520,31 @@ function PropertiesPageInner() {
             {applied.city && (
               <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full">
                 📍 {applied.city}
-                <button onClick={() => {
-                  setLocationInput("");
-                  setApplied(prev => ({ ...prev, city: "" }));
-                  setCity("");
-                }}><X size={12} /></button>
+                <button onClick={() => { setLocationInput(""); setApplied((p) => ({ ...p, city: "" })); setCity(""); }}><X size={12} /></button>
               </span>
             )}
             {applied.bhk && (
               <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full">
                 🛏 {applied.bhk.toUpperCase().replace(/-/g, " ")}
-                <button onClick={() => {
-                  setSelectedBedrooms([]);
-                  setApplied(prev => ({ ...prev, bhk: "" }));
-                  setBhk("");
-                }}><X size={12} /></button>
+                <button onClick={() => { setSelectedBedrooms([]); setApplied((p) => ({ ...p, bhk: "" })); setBhk(""); }}><X size={12} /></button>
               </span>
             )}
             {applied.property_type && (
               <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full">
                 🏠 {applied.property_type.charAt(0).toUpperCase() + applied.property_type.slice(1)}
-                <button onClick={() => {
-                  setSelectedPropertyTypes([]);
-                  setApplied(prev => ({ ...prev, property_type: "" }));
-                  setPropertyType("");
-                }}><X size={12} /></button>
+                <button onClick={() => { setSelectedPropertyTypes([]); setApplied((p) => ({ ...p, property_type: "" })); setPropertyType(""); }}><X size={12} /></button>
               </span>
             )}
             {applied.search && (
               <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full">
                 🔍 {applied.search}
-                <button onClick={() => {
-                  setProjectInput("");
-                  setApplied(prev => ({ ...prev, search: "" }));
-                  setSearch("");
-                }}><X size={12} /></button>
+                <button onClick={() => { setProjectInput(""); setApplied((p) => ({ ...p, search: "" })); setSearch(""); }}><X size={12} /></button>
               </span>
             )}
             {(applied.min_budget > 10 || applied.max_budget < 500) && (
               <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/10 text-white/80 text-xs px-3 py-1.5 rounded-full">
                 💰 {formatBudget(applied.min_budget)} – {formatBudget(applied.max_budget)}
-                <button onClick={() => {
-                  setMinBudget(10);
-                  setMaxBudget(500);
-                  setApplied(prev => ({ ...prev, min_budget: 10, max_budget: 500 }));
-                }}><X size={12} /></button>
+                <button onClick={() => { setMinBudget(10); setMaxBudget(500); setApplied((p) => ({ ...p, min_budget: 10, max_budget: 500 })); }}><X size={12} /></button>
               </span>
             )}
           </div>
@@ -782,9 +553,7 @@ function PropertiesPageInner() {
         {/* Grid */}
         {loading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 justify-items-center">
-            {[...Array(PER_PAGE)].map((_, i) => (
-              <SkeletonCard key={i} />
-            ))}
+            {[...Array(PER_PAGE)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : filtered.length > 0 ? (
           <>
@@ -796,36 +565,20 @@ function PropertiesPageInner() {
               ))}
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-3 mt-14 flex-wrap">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="px-5 py-2.5 rounded-full border border-white/10 text-white/60 text-sm hover:border-[#ef4800] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
-                >
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+                  className="px-5 py-2.5 rounded-full border border-white/10 text-white/60 text-sm hover:border-[#ef4800] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition">
                   Previous
                 </button>
-
                 {[...Array(totalPages)].map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setPage(i + 1)}
-                    className={`w-10 h-10 rounded-full text-sm transition ${
-                      page === i + 1
-                        ? "bg-[#ef4800] text-white"
-                        : "border border-white/10 text-white/60 hover:border-[#ef4800] hover:text-white"
-                    }`}
-                  >
+                  <button key={i} onClick={() => setPage(i + 1)}
+                    className={`w-10 h-10 rounded-full text-sm transition ${page === i + 1 ? "bg-[#ef4800] text-white" : "border border-white/10 text-white/60 hover:border-[#ef4800] hover:text-white"}`}>
                     {i + 1}
                   </button>
                 ))}
-
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="px-5 py-2.5 rounded-full border border-white/10 text-white/60 text-sm hover:border-[#ef4800] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition"
-                >
+                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+                  className="px-5 py-2.5 rounded-full border border-white/10 text-white/60 text-sm hover:border-[#ef4800] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition">
                   Next
                 </button>
               </div>
@@ -834,13 +587,9 @@ function PropertiesPageInner() {
         ) : (
           <div className="text-center py-24 border border-white/10 rounded-3xl bg-white/[0.02]">
             <h3 className="text-white text-2xl font-semibold">No Properties Found</h3>
-            <p className="text-white/50 mt-3">
-              Try adjusting your filters to explore more options.
-            </p>
-            <button
-              onClick={handleClearAll}
-              className="mt-6 px-6 py-2.5 bg-[#ef4800] hover:bg-[#b90002] text-white rounded-full text-sm font-medium transition"
-            >
+            <p className="text-white/50 mt-3">Try adjusting your filters to explore more options.</p>
+            <button onClick={handleClearAll}
+              className="mt-6 px-6 py-2.5 bg-[#ef4800] hover:bg-[#b90002] text-white rounded-full text-sm font-medium transition">
               Clear Filters
             </button>
           </div>
@@ -850,16 +599,13 @@ function PropertiesPageInner() {
   );
 }
 
-// ── Export wrapped in Suspense (required for useSearchParams) ────────────────
 export default function PropertiesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="bg-[#0f0f0f] min-h-screen flex items-center justify-center">
-          <div className="text-white/40 text-sm">Loading...</div>
-        </div>
-      }
-    >
+    <Suspense fallback={
+      <div className="bg-[#0f0f0f] min-h-screen flex items-center justify-center">
+        <div className="text-white/40 text-sm">Loading...</div>
+      </div>
+    }>
       <PropertiesPageInner />
     </Suspense>
   );
