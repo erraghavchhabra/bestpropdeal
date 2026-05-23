@@ -19,10 +19,10 @@ import FAQ from "@/components/detailPage/faqs";
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 /** Format a raw price number (e.g. 424000) into a readable Indian label. */
-function formatIndianPrice(raw) {
+function formatIndianPrice(raw: string | number | null | undefined): string | null {
   if (!raw) return null;
   const num = Number(raw);
-  if (isNaN(num)) return raw;
+  if (isNaN(num)) return String(raw);
   if (num >= 10_000_000) return `₹${(num / 10_000_000).toFixed(2)} Cr`;
   if (num >= 100_000)    return `₹${(num / 100_000).toFixed(2)} L`;
   return `₹${num.toLocaleString("en-IN")}`;
