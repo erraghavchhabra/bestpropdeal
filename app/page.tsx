@@ -8,151 +8,62 @@ import Testimonials from "@/components/Testimonials";
 import CallToAction from "@/components/CallToAction";
 import BlogSection from "@/components/Blogs";
 import LogoSlider from "@/components/LogoSlider";
+import { API } from "@/lib/api";
 
-const featuredProperties: Property[] = [
-  {
-    id: 1,
-    slug: "panvelkar-greens",
-    title: "Panvelkar Greens",
-    location: "Joveli, Badlapur East, Thane, Maharashtra",
-    price: "₹1.08 Cr - 2.34 Cr",
-    type: "1, 2 BHK",
-    image: "/assets/img/p1.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 2,
-    slug: "panvelkar-utsav",
-    title: "Panvelkar Utsav",
-    location: "Valivali Gaon, Badlapur West, Maharashtra",
-    price: "₹8.25 Cr - 11.55 Cr",
-    type: "3, 4 BHK",
-    image: "/assets/img/p2.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 3,
-    slug: "dreamland-dreams-enclave",
-    title: "Dreamland Dreams Enclave",
-    location: "Belavali, Badlapur West, Thane",
-    price: "₹1.54 Cr - 1.75 Cr",
-    type: "2 BHK",
-    image: "/assets/img/p3.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 4,
-    slug: "panvelkar-greens-2",
-    title: "Panvelkar Greens",
-    location: "Joveli, Badlapur East, Thane, Maharashtra",
-    price: "₹1.08 Cr - 2.34 Cr",
-    type: "1, 2 BHK",
-    image: "/assets/img/p1.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 5,
-    slug: "panvelkar-utsav-2",
-    title: "Panvelkar Utsav",
-    location: "Valivali Gaon, Badlapur West, Maharashtra",
-    price: "₹8.25 Cr - 11.55 Cr",
-    type: "3, 4 BHK",
-    image: "/assets/img/p2.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 6,
-    slug: "dreamland-dreams-enclave-2",
-    title: "Dreamland Dreams Enclave",
-    location: "Belavali, Badlapur West, Thane",
-    price: "₹1.54 Cr - 1.75 Cr",
-    type: "2 BHK",
-    image: "/assets/img/p3.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-];
+function mapProperty(item: any): Property {
+  return {
+    id:          item.id,
+    slug:        item.slug,
+    title:       item.title       ?? "",
+    location:    item.locality    ?? "",
+    price:       item.price_label ?? "",
+    type:        item.bhk         ?? "",
+    image:       item.thumbnail   ?? "",
+    whatsapp:    "919999999999",
+    phone:       "919999999999",
+    possession:  item.possession  ?? "",
+    rera:        item.rera        ?? "",
+    status:      item.status      ?? "",
+    bhk_configs: item.bhk_configs ?? [],
+  };
+}
 
-const assuredProperties: Property[] = [
-  {
-    id: 101,
-    slug: "assured-panvelkar-greens",
-    title: "Panvelkar Greens",
-    location: "Joveli, Badlapur East, Thane, Maharashtra",
-    price: "₹1.08 Cr - 2.34 Cr",
-    type: "1, 2 BHK",
-    image: "/assets/img/p1.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 102,
-    slug: "assured-panvelkar-utsav",
-    title: "Panvelkar Utsav",
-    location: "Valivali Gaon, Badlapur West, Maharashtra",
-    price: "₹8.25 Cr - 11.55 Cr",
-    type: "3, 4 BHK",
-    image: "/assets/img/p2.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 103,
-    slug: "assured-dreamland-dreams-enclave",
-    title: "Dreamland Dreams Enclave",
-    location: "Belavali, Badlapur West, Thane",
-    price: "₹1.54 Cr - 1.75 Cr",
-    type: "2 BHK",
-    image: "/assets/img/p3.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 104,
-    slug: "assured-panvelkar-greens-2",
-    title: "Panvelkar Greens",
-    location: "Joveli, Badlapur East, Thane, Maharashtra",
-    price: "₹1.08 Cr - 2.34 Cr",
-    type: "1, 2 BHK",
-    image: "/assets/img/p1.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 105,
-    slug: "assured-panvelkar-utsav-2",
-    title: "Panvelkar Utsav",
-    location: "Valivali Gaon, Badlapur West, Maharashtra",
-    price: "₹8.25 Cr - 11.55 Cr",
-    type: "3, 4 BHK",
-    image: "/assets/img/p2.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-  {
-    id: 106,
-    slug: "assured-dreamland-dreams-enclave-2",
-    title: "Dreamland Dreams Enclave",
-    location: "Belavali, Badlapur West, Thane",
-    price: "₹1.54 Cr - 1.75 Cr",
-    type: "2 BHK",
-    image: "/assets/img/p3.avif",
-    whatsapp: "919999999999",
-    phone: "919999999999",
-  },
-];
-export default function Home() {
+async function getFastSellingProperties(): Promise<Property[]> {
+  try {
+    const res = await fetch(API.fastSelling, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.data ?? []).map(mapProperty);
+  } catch (error) {
+    console.error("Failed to fetch fast-selling properties:", error);
+    return [];
+  }
+}
+
+async function getAssuredProperties(): Promise<Property[]> {
+  try {
+    const res = await fetch(API.assured, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return (json.data ?? []).map(mapProperty);
+  } catch (error) {
+    console.error("Failed to fetch assured properties:", error);
+    return [];
+  }
+}
+
+export default async function Home() {
+  const [fastSellingProperties, assuredProperties] = await Promise.all([
+    getFastSellingProperties(),
+    getAssuredProperties(),
+  ]);
+
   return (
     <>
       <Hero />
       <VideoSlider />
       <AssuredPropertiesSlider properties={assuredProperties} />
-      <PropertySlider properties={featuredProperties} />
+      <PropertySlider properties={fastSellingProperties} />
       <WhyChooseUs />
       <Testimonials />
       <LogoSlider />

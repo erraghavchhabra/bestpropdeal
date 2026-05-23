@@ -113,11 +113,7 @@ export default function Footer() {
 
             <div className="space-y-3 text-white/65 text-sm mb-6">
               {[
-                "Auction Properties",
-                "Real Estate",
-                "Finance",
-                "Interior & Home Solutions",
-                "Lifestyle & Cultural Services",
+               
               ].map((item) => (
                 <Link
                   key={item}
@@ -130,10 +126,10 @@ export default function Footer() {
             </div>
 
             <div className="space-y-3 text-white/65 text-sm">
-              <Link href="#" className="block hover:text-[#ef4800] transition">
+              <Link href="/terms-and-conditions" className="block hover:text-[#ef4800] transition">
                 Terms and Conditions
               </Link>
-              <Link href="#" className="block hover:text-[#ef4800] transition">
+              <Link href="/privacy-policy" className="block hover:text-[#ef4800] transition">
                 Privacy Policy
               </Link>
             </div>

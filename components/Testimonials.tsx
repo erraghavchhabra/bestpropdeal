@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import { Play, Star } from "lucide-react";
@@ -7,61 +8,81 @@ import { Play, Star } from "lucide-react";
 import "swiper/css";
 import "swiper/css/navigation";
 
-const textTestimonials = [
-  {
-    name: "Rahul Mehta",
-    role: "Bought 3BHK in Andheri",
-    quote:
-      "BestPropDeal made the entire home buying process seamless. Transparent pricing and expert guidance throughout.",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e",
-  },
-  {
-    name: "Priya Sharma",
-    role: "Investor",
-    quote:
-      "Professional team with deep market knowledge. They helped me secure the right property at the right price.",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330",
-  },
-  {
-    name: "Amit Verma",
-    role: "First-Time Buyer",
-    quote:
-      "From shortlist to registration, everything was handled professionally. Highly recommended.",
-    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d",
-  },
-  {
-    name: "Sneha Kapoor",
-    role: "Villa Buyer",
-    quote:
-      "Excellent service, transparent communication, and premium support at every stage.",
-    image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
-  },
-  {
-    name: "Karan Patel",
-    role: "Commercial Investor",
-    quote:
-      "Their investment advice was extremely valuable and helped me close a profitable deal.",
-    image: "https://images.unsplash.com/photo-1502767089025-6572583495b0",
-  },
-  {
-    name: "Neha Arora",
-    role: "Apartment Buyer",
-    quote:
-      "Super smooth experience from property tours to documentation and possession.",
-    image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2",
-  },
-];
+import { API } from "@/lib/api";
 
-const videoTestimonials = [
-  { video: "/assets/videos/testimonial-1.mp4" },
-  { video: "/assets/videos/testimonial-2.mp4" },
-  { video: "/assets/videos/testimonial-3.mp4" },
-  { video: "/assets/videos/testimonial-4.mp4" },
-  { video: "/assets/videos/testimonial-5.mp4" },
-  { video: "/assets/videos/testimonial-6.mp4" },
-];
+// ─── Skeletons ────────────────────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 h-[320px] flex flex-col justify-between animate-pulse">
+      <div className="space-y-3">
+        <div className="flex gap-1">
+          {[...Array(5)].map((_, i) => <div key={i} className="w-4 h-4 rounded bg-white/10" />)}
+        </div>
+        <div className="h-3 bg-white/10 rounded w-full" />
+        <div className="h-3 bg-white/10 rounded w-5/6" />
+        <div className="h-3 bg-white/10 rounded w-4/6" />
+      </div>
+      <div className="pt-5 border-t border-white/10 flex items-center justify-between">
+        <div className="space-y-2">
+          <div className="h-3 bg-white/10 rounded w-24" />
+          <div className="h-3 bg-white/10 rounded w-16" />
+        </div>
+        <div className="w-12 h-12 rounded-full bg-white/10" />
+      </div>
+    </div>
+  );
+}
 
+function VideoSkeleton() {
+  return <div className="rounded-[2rem] bg-white/[0.03] h-[320px] animate-pulse" />;
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function Testimonials() {
+  const [textTestimonials, setTextTestimonials]   = useState([]);
+  const [videoTestimonials, setVideoTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    async function fetchTestimonials() {
+      try {
+        const url = API.testimonials({ per_page: 20 });
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        const list = Array.isArray(json) ? json : json.data ?? [];
+        setTextTestimonials(list.filter((t) => !t.video_url));
+        setVideoTestimonials(list.filter((t) =>  t.video_url));
+      } catch (err) {
+        console.error("Testimonials fetch error:", err);
+        setError("Failed to load testimonials.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchTestimonials();
+  }, []);
+
+  const swiperProps = {
+    modules: [Navigation, Autoplay],
+    navigation: true,
+    loop: true,
+    spaceBetween: 20,
+    breakpoints: {
+      0:    { slidesPerView: 1.1 },
+      640:  { slidesPerView: 2 },
+      1024: { slidesPerView: 3 },
+      1280: { slidesPerView: 4 },
+    },
+  };
+
+  // Don't render anything until client is mounted — avoids ALL hydration issues
+  if (!mounted) return null;
+
   return (
     <section className="bg-[#0f0f0f] py-20 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
@@ -71,107 +92,85 @@ export default function Testimonials() {
           <span className="text-[#ef4800] uppercase tracking-[0.22em] text-sm font-medium">
             Testimonials
           </span>
-
           <h2 className="mt-4 text-3xl md:text-5xl text-white font-light leading-tight">
             Hear From Our
             <span className="font-semibold"> Happy Clients</span>
           </h2>
         </div>
 
-        {/* TEXT TESTIMONIAL SLIDER */}
+        {error && <p className="text-red-400 text-sm mb-6">{error}</p>}
+
+        {/* ── TEXT TESTIMONIALS ── */}
         <div className="mb-10">
-          <Swiper
-            modules={[Navigation, Autoplay]}
-            navigation
-            autoplay={{ delay: 4500 }}
-            loop
-            spaceBetween={20}
-            breakpoints={{
-              0: { slidesPerView: 1.1 },
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-              1280: { slidesPerView: 4 },
-            }}
-          >
-            {textTestimonials.map((item, i) => (
-              <SwiperSlide key={i}>
-                <div className="relative rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm h-[320px] flex flex-col justify-between">
-                  
-                  <div>
-                    <div className="flex gap-1 mb-4">
-                      {[...Array(5)].map((_, idx) => (
-                        <Star
-                          key={idx}
-                          className="w-4 h-4 fill-[#ef4800] text-[#ef4800]"
-                        />
-                      ))}
+          {loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : textTestimonials.length > 0 ? (
+            <Swiper {...swiperProps} autoplay={{ delay: 4500, disableOnInteraction: false }}>
+              {textTestimonials.map((item) => {
+                const rating   = Number(item.rating) || 5;
+                const imageUrl = item.image?.medium || item.image?.full || null;
+                return (
+                  <SwiperSlide key={item.id}>
+                    <div className="rounded-[2rem] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-sm h-[320px] flex flex-col justify-between">
+                      <div>
+                        <div className="flex gap-1 mb-4">
+                          {[...Array(5)].map((_, idx) => (
+                            <Star key={idx} className={`w-4 h-4 ${idx < rating ? "fill-[#ef4800] text-[#ef4800]" : "fill-white/20 text-white/20"}`} />
+                          ))}
+                        </div>
+                        <p className="text-white/75 text-sm leading-7 line-clamp-5">"{item.quote}"</p>
+                      </div>
+                      <div className="pt-5 border-t border-white/10 mt-6 flex items-center justify-between">
+                        <div>
+                          <h4 className="text-white font-semibold">{item.name}</h4>
+                          <p className="text-white/50 text-sm">{item.role}</p>
+                        </div>
+                        {imageUrl ? (
+                          <img src={imageUrl} alt={item.name} className="w-12 h-12 rounded-full object-cover border-2 border-white/20" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-[#ef4800]/20 border-2 border-[#ef4800]/40 flex items-center justify-center">
+                            <span className="text-[#ef4800] font-semibold text-sm">{item.name?.charAt(0) ?? "?"}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  </SwiperSlide>
+                );
+              })}
+            </Swiper>
+          ) : (
+            !error && <p className="text-white/40 text-sm">No testimonials found.</p>
+          )}
+        </div>
 
-                    <p className="text-white/75 text-sm leading-7">
-                      "{item.quote}"
-                    </p>
-                  </div>
-
-                  {/* Bottom Info */}
-                  <div className="pt-5 border-t border-white/10 mt-6 flex items-center justify-between">
-                    <div>
-                      <h4 className="text-white font-semibold">
-                        {item.name}
-                      </h4>
-                      <p className="text-white/50 text-sm">{item.role}</p>
+        {/* ── VIDEO TESTIMONIALS ── */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {[...Array(4)].map((_, i) => <VideoSkeleton key={i} />)}
+          </div>
+        ) : videoTestimonials.length > 0 && (
+          <Swiper {...swiperProps} autoplay={{ delay: 5000, disableOnInteraction: false }}>
+            {videoTestimonials.map((item) => (
+              <SwiperSlide key={item.id}>
+                <div className="relative group rounded-[2rem] overflow-hidden cursor-pointer h-[320px]">
+                  <video
+                    src={item.video_url}
+                    className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
+                    autoPlay muted loop playsInline
+                  />
+                  <div className="absolute inset-0 bg-black/25" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-full bg-[#ef4800] flex items-center justify-center group-hover:scale-110 transition">
+                      <Play className="w-5 h-5 text-white fill-white" />
                     </div>
-
-                    {/* ✅ Avatar (Bottom Right) */}
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-12 h-12 rounded-full object-cover border-2 border-white/20"
-                    />
                   </div>
-
                 </div>
               </SwiperSlide>
             ))}
           </Swiper>
-        </div>
-
-        {/* VIDEO TESTIMONIAL SLIDER */}
-        <Swiper
-          modules={[Navigation, Autoplay]}
-          navigation
-          autoplay={{ delay: 5000 }}
-          loop
-          spaceBetween={20}
-          breakpoints={{
-            0: { slidesPerView: 1.1 },
-            640: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 },
-            1280: { slidesPerView: 4 },
-          }}
-        >
-          {videoTestimonials.map((video, i) => (
-            <SwiperSlide key={i}>
-              <div className="relative group rounded-[2rem] overflow-hidden cursor-pointer h-[320px]">
-                <video
-                  src={video.video}
-                  className="w-full h-full object-cover group-hover:scale-105 transition duration-700"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-
-                <div className="absolute inset-0 bg-black/25" />
-
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-14 h-14 rounded-full bg-[#ef4800] flex items-center justify-center group-hover:scale-110 transition">
-                    <Play className="w-5 h-5 text-white fill-white" />
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+        )}
 
       </div>
     </section>

@@ -32,7 +32,7 @@ const navLinks = [
       { name: "Lifestyle & Cultural Services", href: "/services/lifestyle" },
     ],
   },
-  { name: "Blog / Insights", href: "/blog" },
+  { name: "Blog / Insights", href: "/blogs" },
   { name: "Contact Us", href: "/contact" },
 ];
 
