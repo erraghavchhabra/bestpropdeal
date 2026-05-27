@@ -1,35 +1,47 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { API } from "@/lib/api";
 
-const logos = [
-  {
-    name: "Dashmesh",
-    image: "/assets/img/dashmesh.png",
-  },
-  {
-    name: "Flower Valley",
-    image: "/assets/img/flower-valley.png",
-  },
-  {
-    name: "JP Harmony",
-    image: "/assets/img/jp-harmony.png",
-  },
-  {
-    name: "Panvelkar",
-    image: "/assets/img/panvelakr.png",
-  },
- 
-];
+interface Partner {
+  id: number;
+  title: {
+    rendered: string;
+  };
+  image: {
+    full: string;
+    medium: string;
+    alt: string;
+  };
+}
 
 export default function LogoSlider() {
+  const [logos, setLogos] = useState<Partner[]>([]);
   const [activeLogo, setActiveLogo] = useState<number | null>(null);
+
+  useEffect(() => {
+    const loadPartners = async () => {
+      try {
+        const res = await fetch(API.partners({ per_page: 100 }));
+        const data = await res.json();
+
+        console.log("Partners:", data);
+
+        setLogos(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadPartners();
+  }, []);
+
+  if (!logos.length) return null;
 
   return (
     <section className="py-20 px-4 md:px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-14">
           <span className="text-[#ef4800] uppercase tracking-[0.22em] text-sm font-medium">
             Trusted Partners
@@ -41,14 +53,7 @@ export default function LogoSlider() {
           </h2>
         </div>
 
-        {/* Logo Slider */}
         <div className="relative">
-          {/* Left Fade */}
-          <div className="absolute left-0 top-0 h-full w-20  to-transparent z-10 pointer-events-none" />
-
-          {/* Right Fade */}
-          <div className="absolute right-0 top-0 h-full w-20  to-transparent z-10 pointer-events-none" />
-
           <div className="flex animate-marquee whitespace-nowrap py-4">
             {[...logos, ...logos].map((logo, index) => {
               const realIndex = index % logos.length;
@@ -56,7 +61,7 @@ export default function LogoSlider() {
 
               return (
                 <div
-                  key={index}
+                  key={`${logo.id}-${index}`}
                   className="w-1/5 min-w-[20%] px-3 flex-shrink-0"
                 >
                   <button
@@ -69,17 +74,16 @@ export default function LogoSlider() {
                         : "border-white/10 bg-white/[0.03] hover:border-[#ef4800]/40 hover:bg-white/[0.06]"
                     }`}
                   >
-                    {/* Logo */}
                     <div className="relative w-[150px] h-[65px]">
                       <Image
-                        src={logo.image}
-                        alt={logo.name}
+                        src={logo.image?.full}
+                        alt={logo.title.rendered}
                         fill
                         className="object-contain"
+                        unoptimized
                       />
                     </div>
 
-                    {/* Developer Name */}
                     <div
                       className={`overflow-hidden transition-all duration-500 ${
                         isActive
@@ -88,7 +92,7 @@ export default function LogoSlider() {
                       }`}
                     >
                       <p className="text-[#ef4800] text-sm font-medium tracking-wide">
-                        {logo.name}
+                        {logo.title.rendered}
                       </p>
                     </div>
                   </button>
@@ -99,7 +103,6 @@ export default function LogoSlider() {
         </div>
       </div>
 
-      {/* Styles */}
       <style jsx>{`
         .animate-marquee {
           width: max-content;
@@ -142,28 +145,24 @@ export default function LogoSlider() {
           animation: shake 0.45s ease-in-out;
         }
 
-        /* Large screens = 5 logos */
         @media (max-width: 1280px) {
           .animate-marquee > div {
             min-width: 25%;
           }
         }
 
-        /* Tablet = 3 logos */
         @media (max-width: 1024px) {
           .animate-marquee > div {
             min-width: 33.33%;
           }
         }
 
-        /* Small tablet = 2 logos */
         @media (max-width: 768px) {
           .animate-marquee > div {
             min-width: 50%;
           }
         }
 
-        /* Mobile = 1 logo */
         @media (max-width: 640px) {
           .animate-marquee > div {
             min-width: 80%;

@@ -24,14 +24,29 @@ const navLinks = [
   },
   { name: "Locations", href: "/locations" },
   {
-    name: "Services",
-    dropdown: [
-      { name: "Real Estate Core", href: "/services/real-estate-core" },
-      { name: "Finance", href: "/services/finance" },
-      { name: "Interiors & Home Solutions", href: "/services/interiors" },
-      { name: "Lifestyle & Cultural Services", href: "/services/lifestyle" },
-    ],
-  },
+  name: "Services",
+  dropdown: [
+    {
+      name: "Real Estate Core",
+      href: "/services?service=real-estate-core",
+    },
+
+    {
+      name: "Finance",
+      href: "/services?service=finance",
+    },
+
+    {
+      name: "Interiors & Home Solutions",
+      href: "/services?service=interiors",
+    },
+
+    {
+      name: "Lifestyle & Cultural Services",
+      href: "/services?service=lifestyle",
+    },
+  ],
+},
   { name: "Blog / Insights", href: "/blogs" },
   { name: "Contact Us", href: "/contact" },
 ];

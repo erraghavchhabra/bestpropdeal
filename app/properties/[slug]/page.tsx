@@ -27,6 +27,16 @@ interface BhkConfig {
   floor_plan_url: string;
 }
 
+/** Shape returned by bap_format_gallery() in the REST API */
+export interface GalleryItem {
+  id: number;
+  url: string;
+  thumb: string;
+  type: "image" | "video";
+  mime: string;
+  alt: string;
+}
+
 interface Property {
   title: string;
   content?: string;
@@ -36,7 +46,7 @@ interface Property {
   total_units?: string | number;
   virtual_tour_url?: string;
   is_assured?: boolean;
- status?: string[];
+  status?: string[];
   bhk?: string;
   bhk_config_summary?: string;
   bhk_configs?: BhkConfig[];
@@ -46,7 +56,8 @@ interface Property {
   price_label?: string;
   price_range?: string;
   rera_id?: string;
-  gallery?: string[];
+  /** API now returns rich objects, not plain strings */
+  gallery?: GalleryItem[];
   thumbnail?: string;
   developer_name?: string;
   developer_logo?: string;
@@ -62,7 +73,7 @@ function formatIndianPrice(raw: string | number | null | undefined): string | nu
   const num = Number(raw);
   if (isNaN(num)) return String(raw);
   if (num >= 10_000_000) return `₹${(num / 10_000_000).toFixed(2)} Cr`;
-  if (num >= 100_000)    return `₹${(num / 100_000).toFixed(2)} L`;
+  if (num >= 100_000) return `₹${(num / 100_000).toFixed(2)} L`;
   return `₹${num.toLocaleString("en-IN")}`;
 }
 
@@ -76,8 +87,6 @@ export default function PropertyDetailPage() {
 
   // ── Fetch ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    console.log("Slug:", slug);
-    console.log("API URL:", API.property(slug));
     if (!slug) return;
     const fetchProperty = async () => {
       try {
@@ -118,7 +127,7 @@ export default function PropertyDetailPage() {
       },
     );
     return () => observer.disconnect();
-  }, [property]); // re-run after property loads so sections are in the DOM
+  }, [property]);
 
   const tabs = [
     { label: "Overview",           id: "overview"    },
@@ -164,16 +173,13 @@ export default function PropertyDetailPage() {
     "Price on Request";
 
   const configSummary = property.bhk_config_summary || property.bhk || "—";
-
   const carpetRange = property.carpet_range || property.carpet_area || "—";
-
   const reraId = property.rera_id || "—";
 
   const waLink = `https://wa.me/919999999999?text=Hi, I'm interested in ${encodeURIComponent(
     property.title,
   )}`;
 
-  // Sidebar info rows — driven entirely by API data
   const sidebarInfo: [string, string][] = [
     ["Configuration", configSummary],
     ["Possession",    property.possession || "—"],
@@ -185,16 +191,16 @@ export default function PropertyDetailPage() {
     <main className="bg-[#0f0f0f] min-h-screen pb-14">
       <div className="max-w-7xl mx-auto">
 
-        {/* GALLERY */}
-    <PropertyGallery
-  images={property.gallery ?? []}
-  thumbnail={property.thumbnail ?? ""}
-  title={property.title}
-  locality={property.locality ?? ""}
-  developerName={property.developer_name ?? ""}
-  developerLogo={property.developer_logo ?? ""}
-  priceLabel={property.price_label ?? ""}
-/>
+        {/* GALLERY — now receives GalleryItem[] */}
+        <PropertyGallery
+          gallery={property.gallery ?? []}
+          thumbnail={property.thumbnail ?? ""}
+          title={property.title}
+          locality={property.locality ?? ""}
+          developerName={property.developer_name ?? ""}
+          developerLogo={property.developer_logo ?? ""}
+          priceLabel={property.price_label ?? ""}
+        />
 
         {/* STICKY NAVBAR */}
         <div className="sticky top-[86px] z-50 bg-[#0f0f0f]/80 backdrop-blur-md border-b border-white/10 overflow-x-auto">
@@ -226,20 +232,20 @@ export default function PropertyDetailPage() {
           {/* LEFT SIDE */}
           <div className="space-y-20">
             <div id="overview" className="scroll-mt-[140px]">
-           <PropertyOverview
-  title={property.title}
-  content={property.content ?? ""}
-  locality={property.locality ?? ""}
-  possession={property.possession ?? ""}
-  totalFloors={property.total_floors ? Number(property.total_floors) : undefined}
-totalUnits={property.total_units ? Number(property.total_units) : undefined}
-  virtualTourUrl={property.virtual_tour_url ?? ""}
-  isAssured={property.is_assured ?? false}
- status={property.status ?? []}
-  bhk={property.bhk_config_summary || property.bhk || ""}
-  carpetArea={property.carpet_range || property.carpet_area || ""}
-  priceLabel={property.price_label ?? ""}
-/>
+              <PropertyOverview
+                title={property.title}
+                content={property.content ?? ""}
+                locality={property.locality ?? ""}
+                possession={property.possession ?? ""}
+                totalFloors={property.total_floors ? Number(property.total_floors) : undefined}
+                totalUnits={property.total_units ? Number(property.total_units) : undefined}
+                virtualTourUrl={property.virtual_tour_url ?? ""}
+                isAssured={property.is_assured ?? false}
+                status={property.status ?? []}
+                bhk={property.bhk_config_summary || property.bhk || ""}
+                carpetArea={property.carpet_range || property.carpet_area || ""}
+                priceLabel={property.price_label ?? ""}
+              />
             </div>
 
             <div id="amenities" className="scroll-mt-[140px]">
@@ -247,7 +253,7 @@ totalUnits={property.total_units ? Number(property.total_units) : undefined}
             </div>
 
             <div id="price-floor" className="scroll-mt-[140px]">
-              <PropertyPriceFloorPlan bhkConfigs={property.bhk_configs ??[]} />
+              <PropertyPriceFloorPlan bhkConfigs={property.bhk_configs ?? []} />
             </div>
 
             <div id="locality" className="scroll-mt-[140px]">
@@ -262,7 +268,7 @@ totalUnits={property.total_units ? Number(property.total_units) : undefined}
             </div>
 
             <div id="emi" className="scroll-mt-[140px]">
-              <EmiCalculator  />
+              <EmiCalculator />
             </div>
 
             <div id="faq" className="scroll-mt-[140px]">
@@ -289,7 +295,6 @@ totalUnits={property.total_units ? Number(property.total_units) : undefined}
               <div className="absolute inset-0 rounded-[2.2rem] border border-white/5 pointer-events-none" />
 
               <div className="relative z-10">
-
                 {/* PRICE */}
                 <div className="pb-5 border-b border-white/10">
                   <p className="text-white/45 text-xs uppercase tracking-[0.24em] mb-2">
@@ -383,7 +388,6 @@ totalUnits={property.total_units ? Number(property.total_units) : undefined}
                     Free expert consultation • No brokerage • Verified property
                   </p>
                 </div>
-
               </div>
             </div>
           </aside>
