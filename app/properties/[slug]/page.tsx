@@ -63,6 +63,7 @@ interface Property {
   developer_logo?: string;
   developer_url?: string;
   amenities?: string[];
+  nearby_essentials?:string[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -257,7 +258,8 @@ export default function PropertyDetailPage() {
             </div>
 
             <div id="locality" className="scroll-mt-[140px]">
-              <PropertyLocality />
+             <PropertyLocality locality={property.locality}  nearbyEssentials={property.nearby_essentials}/>
+
             </div>
 
             <div id="developer" className="scroll-mt-[140px]">
