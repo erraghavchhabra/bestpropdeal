@@ -6,6 +6,8 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 
 import "swiper/css";
+import { useEffect, useState } from "react";
+import { API } from "@/lib/api";
 
 const teamMembers = [
   {
@@ -47,6 +49,24 @@ const teamMembers = [
 ];
 
 export default function TeamSlider() {
+  const [teamMembers, setTeamMembers] = useState([]);
+const [loading, setLoading] = useState(true);
+useEffect(() => {
+  const fetchTeam = async () => {
+    try {
+      const res = await fetch(API.teamMembers);
+      const data = await res.json();
+
+      setTeamMembers(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchTeam();
+}, []);
   return (
     <section className="py-20 px-4 md:px-6 bg-[#111111] overflow-hidden">
 
@@ -94,42 +114,30 @@ export default function TeamSlider() {
           }}
         >
 
-          {teamMembers.map((member) => (
-            <SwiperSlide key={member.id}>
+         {teamMembers.map((member: any) => (
+  <SwiperSlide key={member.id}>
+    <div className="group rounded-[2rem] overflow-hidden">
+      <div className="relative aspect-[2.5/3] overflow-hidden">
+        <Image
+          src={member.image}
+          alt={member.name}
+          fill
+          className="object-cover"
+        />
+      </div>
 
-              <div className="group rounded-[2rem] overflow-hidden border border-white/10 bg-white/[0.03] hover:border-[#ef4800]/40 transition-all duration-500">
+      <div className="p-5 text-center">
+        <h3 className="text-white text-xl font-semibold">
+          {member.name}
+        </h3>
 
-                {/* IMAGE */}
-                <div className="relative aspect-2.5/3 overflow-hidden">
-
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    fill
-                    className="object-cover group-hover:scale-110 transition-transform duration-700"
-                  />
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-
-                </div>
-
-                {/* CONTENT */}
-                <div className="p-5 text-center">
-
-                  <h3 className="text-white text-xl font-semibold">
-                    {member.name}
-                  </h3>
-
-                  <span className="mt-2 text-[#ef4800] text-[11px] tracking-[0.18em] uppercase">
-                    {member.designation}
-                  </span>
-
-                </div>
-
-              </div>
-
-            </SwiperSlide>
-          ))}
+        <span className="mt-2 text-[#ef4800] text-[11px] uppercase">
+          {member.designation}
+        </span>
+      </div>
+    </div>
+  </SwiperSlide>
+))}
 
         </Swiper>
 

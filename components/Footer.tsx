@@ -2,6 +2,7 @@
 import { Phone, Mail, MapPin, Headphones } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useThemeSettings } from "@/hooks/useThemeSettings";
 import {
   FaFacebookF,
   FaInstagram,
@@ -10,6 +11,7 @@ import {
 } from "react-icons/fa";
 
 export default function Footer() {
+  const { settings } = useThemeSettings();
   return (
     <footer className="bg-black text-white pt-20 pb-8">
       <div className="max-w-7xl mx-auto px-6">
@@ -19,31 +21,34 @@ export default function Footer() {
           {/* BRAND */}
           <div>
             <Link href="/" className="inline-block mb-4">
-              <Image
-                src="/assets/img/logo.png"
-                alt="BestPropDeal"
-                width={120}
-                height={30}
-                className="h-auto"
-              />
+             <Image
+  src={settings?.logo || "/assets/img/logo.png"}
+  alt="BestPropDeal"
+  width={120}
+  height={30}
+  className="h-auto"
+/>
             </Link>
 
             <div className="space-y-4 text-white/65 text-sm">
               <div className="flex items-start gap-3">
                 <Phone className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
-                <p>+91-7969669900</p>
+                <p>{settings?.phone_number}</p>
               </div>
 
               <div className="flex items-start gap-3">
                 <Mail className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
-                <p>sales@bestpropdeal.com</p>
+                <p>{settings?.email}</p>
               </div>
 
               <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-[#ef4800] mt-1 flex-shrink-0" />
-                <p className="max-w-xs leading-7">
-                  567Q+FV2 Gandhi Chowk, Bestpropdeal Head offfice, opp. Pm shri Digital School, Patil Pada, Station Pada, Badlapur, Maharashtra 421503
-                </p>
+              <div
+  className="max-w-xs leading-7"
+  dangerouslySetInnerHTML={{
+    __html: settings?.address || "",
+  }}
+/>
               </div>
             </div>
 
@@ -86,25 +91,35 @@ export default function Footer() {
           <div>
             <h4 className="text-lg font-medium mb-6">Navigation</h4>
 
-            <div className="space-y-3 text-white/65 text-sm">
-              {[
-                "Home",
-                "Who We Are",
-                "Awards",
-                "Developers",
-                "Video Gallery",
-                "Blogs",
-                "Contact us",
-              ].map((item) => (
-                <Link
-                  key={item}
-                  href="#"
-                  className="block hover:text-[#ef4800] transition"
-                >
-                  {item}
-                </Link>
-              ))}
-            </div>
+           <div className="space-y-3 text-white/65 text-sm">
+  <Link
+    href="/"
+    className="block hover:text-[#ef4800] transition"
+  >
+    Home
+  </Link>
+
+  <Link
+    href="/about"
+    className="block hover:text-[#ef4800] transition"
+  >
+    Who We Are
+  </Link>
+
+  <Link
+    href="/blogs"
+    className="block hover:text-[#ef4800] transition"
+  >
+    Blogs
+  </Link>
+
+  <Link
+    href="/contact"
+    className="block hover:text-[#ef4800] transition"
+  >
+    Contact Us
+  </Link>
+</div>
           </div>
 
           {/* OVERVIEW */}

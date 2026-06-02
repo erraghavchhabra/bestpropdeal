@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useThemeSettings } from "@/hooks/useThemeSettings";
 import {
   Menu,
   X,
@@ -22,7 +23,7 @@ const navLinks = [
       { name: "Upcoming Project", href: "/projects/upcoming" },
     ],
   },
-  { name: "Locations", href: "/locations" },
+  
   {
   name: "Services",
   dropdown: [
@@ -55,6 +56,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const { settings } = useThemeSettings();
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
@@ -78,15 +80,12 @@ export default function Header() {
         {/* LOGO */}
         <Link href="/" className="flex items-center">
           <Image
-            src="/assets/img/logo.png"
-            alt="Logo"
-            width={120}
-            height={30}
-            priority
-            className={`h-auto transition-all duration-300 ${
-              isScrolled ? "w-[95px]" : "w-[120px]"
-            }`}
-          />
+  src={settings?.logo || "/assets/img/logo.png"}
+  alt="Logo"
+  width={120}
+  height={30}
+  priority
+/>
         </Link>
 
         {/* DESKTOP NAV + CALL */}
@@ -126,7 +125,7 @@ export default function Header() {
 
           {/* 📞 Call Button */}
           <a
-            href="tel:+917969669900"
+           href={`tel:${settings?.phone_number || "+917969669900"}`}
             className="flex items-center gap-2 bg-[#ef4800] hover:bg-[#b90002] text-white px-5 py-2 rounded-full font-medium transition shadow-lg hover:shadow-xl"
           >
             <Phone size={16} />
@@ -137,7 +136,7 @@ export default function Header() {
         {/* MOBILE ACTIONS */}
         <div className="lg:hidden flex items-center gap-4">
           {/* Quick Call */}
-          <a href="tel:+917969669900" className="text-white">
+          <a href={`tel:${settings?.phone_number || "+917969669900"}`} className="text-white">
             <Phone size={24} />
           </a>
 
@@ -212,7 +211,7 @@ export default function Header() {
 
           {/* 📞 Mobile Call Button */}
           <a
-            href="tel:+917969669900"
+           href={`tel:${settings?.phone_number || "+917969669900"}`}
             className="mt-4 flex items-center justify-center gap-2 bg-[#ef4800] hover:bg-[#b90002] text-white px-5 py-3 rounded-full font-medium transition"
           >
             <Phone size={18} />
