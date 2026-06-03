@@ -297,9 +297,10 @@ export default function PropertyGallery({
                   {priceLabel}
                 </h2>
               )}
+              {/*
               <button className="mt-4 px-8 py-3.5 rounded-full bg-white text-[#0f0f0f] hover:bg-[#ef4800] hover:text-white transition text-xs tracking-[0.28em] font-medium">
                 BOOK PROPERTY
-              </button>
+              </button>  */}
             </div>
           </div>
 

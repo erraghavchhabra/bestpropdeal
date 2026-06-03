@@ -63,13 +63,15 @@ interface Property {
   developer_logo?: string;
   developer_url?: string;
   amenities?: string[];
-  nearby_essentials?:string[];
+  nearby_essentials?: string[];
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 /** Format a raw price number (e.g. 424000) into a readable Indian label. */
-function formatIndianPrice(raw: string | number | null | undefined): string | null {
+function formatIndianPrice(
+  raw: string | number | null | undefined,
+): string | null {
   if (!raw) return null;
   const num = Number(raw);
   if (isNaN(num)) return String(raw);
@@ -81,6 +83,15 @@ function formatIndianPrice(raw: string | number | null | undefined): string | nu
 // ── Component ──────────────────────────────────────────────────────────────────
 
 export default function PropertyDetailPage() {
+  const [showVisitModal, setShowVisitModal] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+
+const [formData, setFormData] = useState({
+  name: "",
+  phone: "",
+  email: "",
+});
   const { slug } = useParams();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
@@ -121,22 +132,51 @@ export default function PropertyDetailPage() {
         threshold: [0.1, 0.25, 0.5, 0.75],
       },
     );
-    ["overview", "amenities", "price-floor", "locality", "developer", "faq"].forEach(
-      (id) => {
-        const el = document.getElementById(id);
-        if (el) observer.observe(el);
-      },
-    );
+    [
+      "overview",
+      "amenities",
+      "price-floor",
+      "locality",
+      "developer",
+      "faq",
+    ].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
     return () => observer.disconnect();
   }, [property]);
 
+  const handleVisitSubmit = async () => {
+  if (!formData.name || !formData.phone) return;
+  try {
+    setSubmitting(true);
+    const res = await fetch(API.siteVisit, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name:     formData.name,
+        phone:    formData.phone,
+        email:    formData.email,
+        property: property?.title ?? "",
+      }),
+    });
+    if (!res.ok) throw new Error("Failed");
+    setSubmitStatus("success");
+    setFormData({ name: "", phone: "", email: "" });
+  } catch {
+    setSubmitStatus("error");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
   const tabs = [
-    { label: "Overview",           id: "overview"    },
-    { label: "Amenities",          id: "amenities"   },
+    { label: "Overview", id: "overview" },
+    { label: "Amenities", id: "amenities" },
     { label: "Price & Floor Plan", id: "price-floor" },
-    { label: "Locality",           id: "locality"    },
-    { label: "Developer",          id: "developer"   },
-    { label: "FAQ",                id: "faq"         },
+    { label: "Locality", id: "locality" },
+    { label: "Developer", id: "developer" },
+    { label: "FAQ", id: "faq" },
   ];
 
   // ── Loading ────────────────────────────────────────────────────────────────
@@ -148,7 +188,10 @@ export default function PropertyDetailPage() {
           <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-10">
             <div className="space-y-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-white/5 rounded-2xl animate-pulse" />
+                <div
+                  key={i}
+                  className="h-32 bg-white/5 rounded-2xl animate-pulse"
+                />
               ))}
             </div>
             <div className="h-80 bg-white/5 rounded-2xl animate-pulse" />
@@ -183,15 +226,14 @@ export default function PropertyDetailPage() {
 
   const sidebarInfo: [string, string][] = [
     ["Configuration", configSummary],
-    ["Possession",    property.possession || "—"],
-    ["RERA No.",      reraId],
-    ["Carpet Area",   carpetRange],
+    ["Possession", property.possession || "—"],
+    ["RERA No.", reraId],
+    ["Carpet Area", carpetRange],
   ];
 
   return (
     <main className="bg-[#0f0f0f] min-h-screen pb-14">
       <div className="max-w-7xl mx-auto">
-
         {/* GALLERY — now receives GalleryItem[] */}
         <PropertyGallery
           gallery={property.gallery ?? []}
@@ -229,7 +271,6 @@ export default function PropertyDetailPage() {
 
         {/* CONTENT LAYOUT */}
         <div className="grid lg:grid-cols-[1fr_360px] gap-8 mt-10 items-start">
-
           {/* LEFT SIDE */}
           <div className="space-y-20">
             <div id="overview" className="scroll-mt-[140px]">
@@ -238,8 +279,16 @@ export default function PropertyDetailPage() {
                 content={property.content ?? ""}
                 locality={property.locality ?? ""}
                 possession={property.possession ?? ""}
-                totalFloors={property.total_floors ? Number(property.total_floors) : undefined}
-                totalUnits={property.total_units ? Number(property.total_units) : undefined}
+                totalFloors={
+                  property.total_floors
+                    ? Number(property.total_floors)
+                    : undefined
+                }
+                totalUnits={
+                  property.total_units
+                    ? Number(property.total_units)
+                    : undefined
+                }
                 virtualTourUrl={property.virtual_tour_url ?? ""}
                 isAssured={property.is_assured ?? false}
                 status={property.status ?? []}
@@ -258,8 +307,10 @@ export default function PropertyDetailPage() {
             </div>
 
             <div id="locality" className="scroll-mt-[140px]">
-             <PropertyLocality locality={property.locality}  nearbyEssentials={property.nearby_essentials}/>
-
+              <PropertyLocality
+                locality={property.locality}
+                nearbyEssentials={property.nearby_essentials}
+              />
             </div>
 
             <div id="developer" className="scroll-mt-[140px]">
@@ -270,8 +321,14 @@ export default function PropertyDetailPage() {
             </div>
 
             <div id="emi" className="scroll-mt-[140px]">
-              <EmiCalculator />
-            </div>
+  <EmiCalculator
+    defaultAmount={
+      property.price
+        ? Math.min(50_000_000, Math.max(100_000, Number(property.price)))
+        : 10_000_000
+    }
+  />
+</div>
 
             <div id="faq" className="scroll-mt-[140px]">
               <FAQ />
@@ -312,11 +369,12 @@ export default function PropertyDetailPage() {
                       </span>
                     )}
                   </div>
-                  {property.price_range && property.price_range !== property.price_label && (
-                    <p className="text-white/55 text-sm mt-2">
-                      Range: {property.price_range}
-                    </p>
-                  )}
+                  {property.price_range &&
+                    property.price_range !== property.price_label && (
+                      <p className="text-white/55 text-sm mt-2">
+                        Range: {property.price_range}
+                      </p>
+                    )}
                 </div>
 
                 {/* INFO ROWS */}
@@ -331,7 +389,9 @@ export default function PropertyDetailPage() {
                       "
                     >
                       <span className="text-white/50 text-sm">{label}</span>
-                      <span className="text-white text-sm font-medium text-right">{value}</span>
+                      <span className="text-white text-sm font-medium text-right">
+                        {value}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -339,14 +399,15 @@ export default function PropertyDetailPage() {
                 {/* CTA BUTTONS */}
                 <div className="pt-6 space-y-3">
                   <button
+                    onClick={() => setShowVisitModal(true)}
                     className="
-                      w-full flex items-center justify-center gap-2
-                      bg-gradient-to-r from-[#ef4800] to-[#ff6a00]
-                      hover:scale-[1.02]
-                      hover:shadow-[0_0_30px_rgba(239,72,0,0.45)]
-                      text-white rounded-full py-3.5 text-sm font-medium
-                      transition duration-300
-                    "
+    w-full flex items-center justify-center gap-2
+    bg-gradient-to-r from-[#ef4800] to-[#ff6a00]
+    hover:scale-[1.02]
+    hover:shadow-[0_0_30px_rgba(239,72,0,0.45)]
+    text-white rounded-full py-3.5 text-sm font-medium
+    transition duration-300
+  "
                   >
                     <Calendar size={16} />
                     Book Site Visit
@@ -393,9 +454,177 @@ export default function PropertyDetailPage() {
               </div>
             </div>
           </aside>
-
         </div>
       </div>
+      {showVisitModal && (
+  <div
+    className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+    onClick={() => setShowVisitModal(false)}
+  >
+    {/* Backdrop */}
+    <div className="absolute inset-0 bg-black/70 backdrop-blur-md" />
+
+    {/* Modal */}
+    <div
+      onClick={(e) => e.stopPropagation()}
+      className="
+        relative w-full max-w-md overflow-hidden
+        rounded-[32px]
+        border border-[#ef4800]/20
+        bg-gradient-to-br
+        from-[#1c1c1c]
+        via-[#131313]
+        to-black
+        p-8
+        shadow-[0_0_60px_rgba(239,72,0,0.15)]
+      "
+    >
+      {/* Glow */}
+      <div className="absolute -top-24 -right-24 w-60 h-60 bg-[#ef4800]/20 rounded-full blur-3xl" />
+      <div className="absolute -bottom-24 -left-24 w-60 h-60 bg-orange-500/10 rounded-full blur-3xl" />
+
+      <div className="relative z-10">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div
+            className="
+              w-16 h-16 mx-auto mb-4
+              rounded-2xl
+              bg-gradient-to-br
+              from-[#ef4800]
+              to-[#ff6a00]
+              flex items-center justify-center
+            "
+          >
+            <Calendar size={28} className="text-white" />
+          </div>
+
+          <h3 className="text-2xl font-semibold text-white">
+            Schedule Site Visit
+          </h3>
+
+          <p className="text-white/50 text-sm mt-2">
+            Our property expert will contact you shortly.
+          </p>
+        </div>
+
+        {/* Form */}
+      {/* Form */}
+<div className="space-y-4">
+  <input
+    type="text"
+    placeholder="Full Name"
+    value={formData.name}
+    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+    className="
+      w-full h-14 px-5
+      rounded-2xl
+      bg-white/[0.04]
+      border border-white/10
+      text-white
+      placeholder:text-white/30
+      focus:outline-none
+      focus:border-[#ef4800]
+      focus:ring-2
+      focus:ring-[#ef4800]/20
+    "
+  />
+
+  <input
+    type="tel"
+    placeholder="Phone Number"
+    value={formData.phone}
+    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+    className="
+      w-full h-14 px-5
+      rounded-2xl
+      bg-white/[0.04]
+      border border-white/10
+      text-white
+      placeholder:text-white/30
+      focus:outline-none
+      focus:border-[#ef4800]
+      focus:ring-2
+      focus:ring-[#ef4800]/20
+    "
+  />
+
+  <input
+    type="email"
+    placeholder="Email Address"
+    value={formData.email}
+    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+    className="
+      w-full h-14 px-5
+      rounded-2xl
+      bg-white/[0.04]
+      border border-white/10
+      text-white
+      placeholder:text-white/30
+      focus:outline-none
+      focus:border-[#ef4800]
+      focus:ring-2
+      focus:ring-[#ef4800]/20
+    "
+  />
+</div>
+
+{/* Feedback */}
+{submitStatus === "success" && (
+  <p className="text-green-400 text-sm text-center mt-4">
+    ✓ Booking confirmed! We'll contact you shortly.
+  </p>
+)}
+{submitStatus === "error" && (
+  <p className="text-red-400 text-sm text-center mt-4">
+    Something went wrong. Please try again.
+  </p>
+)}
+
+{/* Buttons */}
+<div className="grid grid-cols-2 gap-3 mt-6">
+  <button
+    onClick={() => {
+      setShowVisitModal(false);
+      setSubmitStatus("idle");
+    }}
+    className="
+      h-14 rounded-2xl
+      border border-white/10
+      text-white/70
+      hover:bg-white/5
+      transition
+    "
+  >
+    Cancel
+  </button>
+
+  <button
+    onClick={handleVisitSubmit}
+    disabled={submitting}
+    className="
+      h-14 rounded-2xl
+      bg-gradient-to-r
+      from-[#ef4800]
+      to-[#ff6a00]
+      text-white font-medium
+      hover:shadow-[0_0_25px_rgba(239,72,0,0.4)]
+      disabled:opacity-60
+      disabled:cursor-not-allowed
+      transition
+    "
+  >
+    {submitting ? "Submitting…" : "Submit"}
+  </button>
+</div>
+
+        <p className="text-center text-xs text-white/35 mt-5">
+          No brokerage • Free consultation • Instant callback
+        </p>
+      </div>
+    </div>
+  </div>
+)}
     </main>
   );
 }

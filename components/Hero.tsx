@@ -443,11 +443,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="mt-6 text-center">
-          <button className="bg-[#ef4800] hover:bg-[#b90002] text-white px-8 py-3 rounded-full font-medium transition">
-            Book a Site Visit
-          </button>
-        </div>
+        
       </div>
     </section>
   );

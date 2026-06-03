@@ -127,25 +127,7 @@ export default function PropertyCard({ property }: { property: Property }) {
         <h3 className="text-lg font-semibold">{property.title}</h3>
         <p className="text-sm opacity-80">{property.location}</p>
 
-        {/* Data Points */}
-        <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] bg-white/5 backdrop-blur-md rounded-xl p-3">
-          <div>
-            <p className="opacity-70">Carpet Area</p>
-            <p className="font-medium">{areaDisplay}</p>
-          </div>
-          <div>
-            <p className="opacity-70">Possession</p>
-            <p className="font-medium">{property.possession || "Dec 2026"}</p>
-          </div>
-          <div>
-            <p className="opacity-70">RERA No.</p>
-            <p className="font-medium truncate">{property.rera || "RERA12345678"}</p>
-          </div>
-          <div>
-            <p className="opacity-70">Status</p>
-            <p className="font-medium">{property.status || "Under Construction"}</p>
-          </div>
-        </div>
+       
 
         {/* Price + Type + Explore */}
         <div className="mt-2 border-t border-white/30 pt-2 text-sm flex items-center justify-between">
