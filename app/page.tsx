@@ -9,6 +9,7 @@ import CallToAction from "@/components/CallToAction";
 import BlogSection from "@/components/Blogs";
 import LogoSlider from "@/components/LogoSlider";
 import { API } from "@/lib/api";
+import type { Metadata } from "next";
 
 function mapProperty(item: any): Property {
   return {
@@ -26,6 +27,16 @@ function mapProperty(item: any): Property {
     status:      item.status      ?? "",
     bhk_configs: item.bhk_configs ?? [],
   };
+}
+
+async function getHomePageMeta() {
+  try {
+    const res = await fetch(API.homePage, { next: { revalidate: 3600 } });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
 }
 
 async function getFastSellingProperties(): Promise<Property[]> {
@@ -50,6 +61,15 @@ async function getAssuredProperties(): Promise<Property[]> {
     console.error("Failed to fetch assured properties:", error);
     return [];
   }
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await getHomePageMeta();
+
+  return {
+    title:       page?.acf?.meta_title       ?? page?.title ?? "Property Deal",
+    description: page?.acf?.meta_description ?? "",
+  };
 }
 
 export default async function Home() {

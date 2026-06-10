@@ -112,6 +112,13 @@ export default function Footer() {
   >
     Blogs
   </Link>
+  
+  <Link
+    href="/developers"
+    className="block hover:text-[#ef4800] transition"
+  >
+    Developers
+  </Link>
 
   <Link
     href="/contact"
