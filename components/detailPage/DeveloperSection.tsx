@@ -28,10 +28,7 @@ export default function DeveloperSection({
           {developerName}
         </h2>
 
-        <p className="text-white/60 text-sm mt-4 leading-7 max-w-3xl">
-          {description}
-        </p>
-
+       
       </div>
 
     </section>

@@ -2,6 +2,22 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { API } from "@/lib/api";
 import DeveloperGallery from "@/components/DeveloperGallery";
+import DeveloperProjects from "@/components/Developerprojects";
+
+type Property = {
+  id: number;
+  slug: string;
+  title: string;
+  locality?: string;
+  possession?: string;
+  price?: string | number;
+  price_label?: string;
+  thumbnail?: string;
+  status?: string[];
+  bhk?: string;
+  whatsapp?: string;
+  phone?: string;
+};
 
 type Developer = {
   id: number;
@@ -13,6 +29,8 @@ type Developer = {
   about: string;
   vision: string;
   gallery: string[];
+  properties: Property[];
+  total_projects: number;
 };
 
 export default async function DeveloperPage({
@@ -70,7 +88,11 @@ export default async function DeveloperPage({
         </div>
       </section>
 
+      {/* Gallery */}
       <DeveloperGallery images={developer.gallery} />
+
+      {/* Properties assigned to this developer */}
+      <DeveloperProjects properties={developer.properties ?? []} />
     </>
   );
 }
