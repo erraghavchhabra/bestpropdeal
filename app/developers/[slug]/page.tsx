@@ -88,11 +88,13 @@ export default async function DeveloperPage({
         </div>
       </section>
 
-      {/* Gallery */}
-      <DeveloperGallery images={developer.gallery} />
+     
 
       {/* Properties assigned to this developer */}
       <DeveloperProjects properties={developer.properties ?? []} />
+
+       {/* Gallery */}
+      <DeveloperGallery images={developer.gallery} />
     </>
   );
 }
