@@ -318,10 +318,11 @@ export default function PropertyDetailPage() {
             </div>
 
             <div id="developer" className="scroll-mt-[140px]">
-              <DeveloperSection
-                developerName={property.developer_name ?? ""}
-                description={property.developer_url ?? ""}
-              />
+             <DeveloperSection
+  developerName={property.developer_name ?? ""}
+  developerSlug={property.developer_url}
+  developerLogo={property.developer_logo}
+/>
             </div>
 
             <div id="emi" className="scroll-mt-[140px]">
