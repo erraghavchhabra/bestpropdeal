@@ -50,8 +50,24 @@ export default function VideoCard({
     setIsMuted(!isMuted);
   };
 
+  const handleMouseEnter = () => {
+    setUserInteracted(true);
+    setPlayingId(id);
+  };
+
+  const handleMouseLeave = () => {
+    // Only pause if this card is the one currently playing
+    if (isPlaying) {
+      setPlayingId(null);
+    }
+  };
+
   return (
-    <div className="group relative h-full rounded-3xl overflow-hidden">
+    <div
+      className="group relative h-full rounded-3xl overflow-hidden"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <video
         ref={videoRef}
         src={src}
@@ -66,7 +82,10 @@ export default function VideoCard({
       <div className="absolute top-4 right-4 flex gap-2 z-20 opacity-0 group-hover:opacity-100 transition">
         {userInteracted && (
           <button
-            onClick={togglePlay}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
             className="w-10 h-10 rounded-full bg-black/45 flex items-center justify-center"
           >
             {isPlaying ? (
@@ -78,7 +97,10 @@ export default function VideoCard({
         )}
 
         <button
-          onClick={toggleMute}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleMute();
+          }}
           className="w-10 h-10 rounded-full bg-black/45 flex items-center justify-center"
         >
           {isMuted ? (
@@ -92,7 +114,10 @@ export default function VideoCard({
       {!isPlaying && (
         <div className="absolute inset-0 flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition">
           <button
-            onClick={togglePlay}
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
             className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center"
           >
             <Play size={34} className="text-white fill-white ml-1" />

@@ -1,19 +1,22 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API } from "@/lib/api";
 
 interface Partner {
   id: number;
-  title: {
-    rendered: string;
-  };
-  image: {
-    full: string;
-    medium: string;
-    alt: string;
-  };
+  name: string;
+  experience?: string;
+  image: string;
+  description?: string;
+  slug?: string;
+  about?: string;
+  vision?: string;
+  gallery?: string[];
+  properties?: unknown[];
+  total_projects?: number;
 }
 
 export default function LogoSlider() {
@@ -23,7 +26,7 @@ export default function LogoSlider() {
   useEffect(() => {
     const loadPartners = async () => {
       try {
-        const res = await fetch(API.partners({ per_page: 100 }));
+        const res = await fetch(API.developers);
         const data = await res.json();
 
         console.log("Partners:", data);
@@ -64,10 +67,9 @@ export default function LogoSlider() {
                   key={`${logo.id}-${index}`}
                   className="w-1/5 min-w-[20%] px-3 flex-shrink-0"
                 >
-                  <button
-                    onClick={() =>
-                      setActiveLogo(isActive ? null : realIndex)
-                    }
+                  <Link
+                    href={`/developers/${logo.slug}`}
+                    onClick={() => setActiveLogo(isActive ? null : realIndex)}
                     className={`w-full h-36 rounded-[2rem] border backdrop-blur-sm flex flex-col items-center justify-center transition-all duration-500 ${
                       isActive
                         ? "border-[#ef4800] bg-white/[0.08] shadow-[0_0_25px_rgba(239,72,0,0.18)] active-shake"
@@ -76,8 +78,8 @@ export default function LogoSlider() {
                   >
                     <div className="relative w-[150px] h-[65px]">
                       <Image
-                        src={logo.image?.full}
-                        alt={logo.title.rendered}
+                        src={logo.image}
+                        alt={logo.name}
                         fill
                         className="object-contain"
                         unoptimized
@@ -92,10 +94,10 @@ export default function LogoSlider() {
                       }`}
                     >
                       <p className="text-[#ef4800] text-sm font-medium tracking-wide">
-                        {logo.title.rendered}
+                        {logo.name}
                       </p>
                     </div>
-                  </button>
+                  </Link>
                 </div>
               );
             })}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
+import type { Swiper as SwiperType } from "swiper";
 import { X } from "lucide-react";
 
 import "swiper/css";
@@ -51,9 +52,26 @@ export default function VideoSlider() {
     loadVideos();
   }, []);
 
+  // Click a card in the main listing: open modal showing that exact video,
+  // and auto-play it immediately (no hover needed inside modal).
   const openModal = (index: number) => {
     setActiveIndex(index);
     setModalOpen(true);
+    setPlayingId(`modal-${videos[index]?.id}`);
+  };
+
+  // Stepping next/prev inside the modal (one video at a time) should
+  // auto-play whichever video becomes active there.
+  const handleModalSlideChange = (swiper: SwiperType) => {
+    const activeVideo = videos[swiper.realIndex];
+    if (activeVideo) {
+      setPlayingId(`modal-${activeVideo.id}`);
+    }
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setPlayingId(null);
   };
 
   if (loading) {
@@ -121,29 +139,25 @@ export default function VideoSlider() {
       {modalOpen && (
         <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-xl flex items-center justify-center px-4">
           <button
-            onClick={() => setModalOpen(false)}
+            onClick={closeModal}
             className="absolute top-6 right-6 z-50 w-12 h-12 rounded-full bg-white/10 hover:bg-[#ef6f47] transition flex items-center justify-center"
           >
             <X className="text-white" size={22} />
           </button>
 
-          <div className="w-full max-w-7xl">
+          {/* Single video lightbox: one card at a time, arrows to step through */}
+          <div className="w-full max-w-3xl">
             <Swiper
               modules={[Navigation]}
               navigation
               initialSlide={activeIndex}
               loop
-              spaceBetween={20}
-              slidesPerView={1.2}
-              breakpoints={{
-                640: { slidesPerView: 2 },
-                1024: { slidesPerView: 3 },
-                1280: { slidesPerView: 4 },
-              }}
+              slidesPerView={1}
+              onSlideChange={handleModalSlideChange}
             >
               {videos.map((video) => (
                 <SwiperSlide key={video.id}>
-                  <div className="h-[280px] md:h-[420px] rounded-3xl overflow-hidden">
+                  <div className="h-[60vh] md:h-[70vh] rounded-3xl overflow-hidden">
                     <VideoCard
                       id={`modal-${video.id}`}
                       src={video.video_url}
