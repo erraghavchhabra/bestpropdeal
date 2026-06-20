@@ -15,12 +15,29 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+// Normalizes whatever shape the /taxonomies/cities endpoint returns
+// (array of strings, or array of { name, slug, title, ... } objects)
+// into a flat array of display-name strings.
+function normalizeCities(raw: any): string[] {
+  const list = Array.isArray(raw) ? raw : raw?.data ?? raw?.cities ?? [];
+  if (!Array.isArray(list)) return [];
+
+  return list
+    .map((item: any) => {
+      if (typeof item === "string") return item;
+      return item?.name ?? item?.title ?? item?.label ?? item?.slug ?? null;
+    })
+    .filter((c: any): c is string => typeof c === "string" && c.trim().length > 0);
+}
+
 export default function Hero() {
   const router = useRouter();
 
-  const cities        = ["Badlapur", "Navi Mumbai", "Panvel", "Thane", "Kalyan"];
   const propertyTypes = ["Apartment", "Duplex", "Penthouse", "Villa", "Studio"];
   const bedroomOptions = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "5 BHK"];
+
+  // Fallback list used only if the cities API fails / hasn't loaded yet
+  const fallbackCities = ["Badlapur", "Navi Mumbai", "Panvel", "Thane", "Kalyan"];
 
   const trendingProjects = [
     "🔥 Panvelkar Greens — 3 units left • Badlapur East",
@@ -32,12 +49,16 @@ export default function Hero() {
   // --- State ---
   const [showFilters, setShowFilters] = useState(false);
 
+  // Cities — now dynamic, fetched from API
+  const [cities, setCities] = useState<string[]>(fallbackCities);
+  const [citiesLoading, setCitiesLoading] = useState(true);
+
   // Location
   const [locationInput, setLocationInput]   = useState("");
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Project autocomplete — now from API
+  // Project autocomplete — from API
   const [projectInput, setProjectInput]           = useState("");
   const [projectSuggestions, setProjectSuggestions] = useState<{ id: number; title: string; slug: string }[]>([]);
   const [showProjectSuggestions, setShowProjectSuggestions] = useState(false);
@@ -58,6 +79,33 @@ export default function Hero() {
 
   const searchWrapperRef = useRef<HTMLDivElement>(null);
   const debouncedProject = useDebounce(projectInput, 300);
+
+  // --- Fetch cities from API on mount ---
+  useEffect(() => {
+    let cancelled = false;
+
+    setCitiesLoading(true);
+    fetch(API.cities)
+      .then((r) => r.json())
+      .then((res) => {
+        if (cancelled) return;
+        const normalized = normalizeCities(res);
+        if (normalized.length > 0) {
+          setCities(normalized);
+        }
+        // if the API returns nothing usable, we silently keep the fallback list
+      })
+      .catch(() => {
+        // network/parse error -> keep fallback list, fail silently
+      })
+      .finally(() => {
+        if (!cancelled) setCitiesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // --- Fetch autocomplete from API ---
   useEffect(() => {
@@ -230,7 +278,11 @@ export default function Hero() {
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500"
                 >
-                  <ChevronDown size={16} />
+                  {citiesLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
                 </button>
 
                 {showSuggestions && filteredCities.length > 0 && (
@@ -243,11 +295,17 @@ export default function Hero() {
                     ))}
                   </div>
                 )}
+
+                {showSuggestions && filteredCities.length === 0 && !citiesLoading && (
+                  <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-2xl shadow-xl border border-gray-200 z-[999] px-4 py-3">
+                    <p className="text-xs text-gray-500">No matching cities</p>
+                  </div>
+                )}
               </div>
 
               <div className="hidden lg:block h-8 w-px bg-gray-300 self-center" />
 
-              {/* Project Search — now live from API */}
+              {/* Project Search — live from API */}
               <div className="flex-1 relative">
                 <div className="relative flex items-center">
                   <input

@@ -8,7 +8,7 @@ import {
   useCallback,
   Suspense,
 } from "react";
-import { ChevronDown, Search, X } from "lucide-react";
+import { ChevronDown, Search, X, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import PropertyCard, { Property } from "@/components/PropertyCard";
 import { API } from "@/lib/api";
@@ -90,9 +90,25 @@ interface AppliedFilters {
   max_budget: number;
 }
 
+// Normalizes whatever shape the /taxonomies/cities endpoint returns
+// (array of strings, or array of { name, slug, title, ... } objects)
+// into a flat array of display-name strings.
+function normalizeCities(raw: any): string[] {
+  const list = Array.isArray(raw) ? raw : raw?.data ?? raw?.cities ?? [];
+  if (!Array.isArray(list)) return [];
+
+  return list
+    .map((item: any) => {
+      if (typeof item === "string") return item;
+      return item?.name ?? item?.title ?? item?.label ?? item?.slug ?? null;
+    })
+    .filter((c: any): c is string => typeof c === "string" && c.trim().length > 0);
+}
+
 // ── Inner page (reads searchParams) ─────────────────────────────────────────
 function PropertiesPageInner() {
-  const cities = ["Badlapur", "Navi Mumbai", "Panvel", "Thane", "Kalyan"];
+  // Fallback list used only if the cities API fails / hasn't loaded yet
+  const fallbackCities = ["Badlapur", "Navi Mumbai", "Panvel", "Thane", "Kalyan"];
   const propertyTypes = ["Apartment", "Duplex", "Penthouse", "Villa", "Studio"];
   const bedroomOptions = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "5 BHK"];
 
@@ -122,8 +138,13 @@ function PropertiesPageInner() {
   const searchWrapperRef = useRef<HTMLDivElement>(null);
 
   const [showFilters, setShowFilters] = useState(false);
+
+  // Cities — now dynamic, fetched from API
+  const [cities, setCities] = useState<string[]>(fallbackCities);
+  const [citiesLoading, setCitiesLoading] = useState(true);
+
   const [locationInput, setLocationInput] = useState("");
-  const [filteredCities, setFilteredCities] = useState<string[]>(cities);
+  const [filteredCities, setFilteredCities] = useState<string[]>(fallbackCities);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [projectInput, setProjectInput] = useState("");
   const [projectSuggestions, setProjectSuggestions] = useState<string[]>([]);
@@ -186,6 +207,34 @@ function PropertiesPageInner() {
       setShowProjectSuggestions(false);
     }
   };
+
+  // --- Fetch cities from API on mount ---
+  useEffect(() => {
+    let cancelled = false;
+
+    setCitiesLoading(true);
+    fetch(API.cities)
+      .then((r) => r.json())
+      .then((res) => {
+        if (cancelled) return;
+        const normalized = normalizeCities(res);
+        if (normalized.length > 0) {
+          setCities(normalized);
+          setFilteredCities(normalized);
+        }
+        // if the API returns nothing usable, we silently keep the fallback list
+      })
+      .catch(() => {
+        // network/parse error -> keep fallback list, fail silently
+      })
+      .finally(() => {
+        if (!cancelled) setCitiesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -349,7 +398,11 @@ function PropertiesPageInner() {
                   }}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50"
                 >
-                  <ChevronDown size={16} />
+                  {citiesLoading ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <ChevronDown size={16} />
+                  )}
                 </button>
                 {showSuggestions && filteredCities.length > 0 && (
                   <div className="absolute top-full left-0 mt-2 w-full bg-[#111111]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/10 z-[999] overflow-hidden">
@@ -359,6 +412,11 @@ function PropertiesPageInner() {
                         {c}
                       </button>
                     ))}
+                  </div>
+                )}
+                {showSuggestions && filteredCities.length === 0 && !citiesLoading && (
+                  <div className="absolute top-full left-0 mt-2 w-full bg-[#111111]/95 backdrop-blur-2xl rounded-2xl shadow-2xl border border-white/10 z-[999] px-4 py-3">
+                    <p className="text-xs text-white/50">No matching cities</p>
                   </div>
                 )}
               </div>
